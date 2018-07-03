@@ -1,0 +1,24 @@
+{
+  "name": "imgsrv",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "docker:build": "docker build . -t imgsrv",
+    "docker:run": "docker run --name imgsrv -p 56789:80 imgsrv",
+    "docker:stop": "docker stop imgsrv & docker rm imgsrv",
+    "docker:attach": "docker attach imgsrv",
+    "docker": "npm run docker:stop && npm run docker:build && npm run docker:run"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "await-stream-ready": "^1.0.1",
+    "express": "^4.16.3",
+    "request": "^2.87.0",
+    "request-promise": "^4.2.2",
+    "request-promise-native": "^1.0.5",
+    "uuid": "^3.3.2"
+  }
+}
