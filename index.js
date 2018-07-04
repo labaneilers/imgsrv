@@ -1,100 +1,61 @@
 'use strict';
 
+// Framework dependencies
 const express = require('express');
-const path = require('path');
-const request = require('request-promise-native');
 const fs = require('fs');
-const uuid = require('uuid/v4');
-const util = require('util');
-const writeFile = util.promisify(fs.writeFile);
+
+// Modules
 const optimize = require("./optimize");
 const TempTracker = require("./temptracker").TempTracker;
+const api = require('./api');
+const proxy = require('./proxy');
 
 // Constants
 const PORT = 80;
 const HOST = '0.0.0.0';
+const TEMP_DIR = __dirname + '/tmp';
 
 // App
 const app = express();
 app.get('/', async (req, res, next) => {
 
-  //
+  let tempTracker;
+
   try {
-    let uri = req.query.u;
-    let width = parseInt(req.query.w) || 500;
-    let allowWebp = req.query.webp == "1";
-    let allowJp2 = req.query.jp2 == "1";
 
-    console.log(uri);
-    console.log(`width: ${width}`);
-
-    if (!uri) {
-      throw new Error("u (uri) parameter required");
-    }
-
-    if (width > 2400) {
-      throw new Error("w parameter too large");
-    }
-
-    if (width < 2) {
-      throw new Error("w parameter too small");
-    }
+    let params = api.parseParams(req);
 
     // TODO whitelist allowed domains
 
-    let response = await request({
-        method: 'GET',
-        encoding: 'binary',
-        uri: uri,
-        resolveWithFullResponse: true
-      });
+    tempTracker = new TempTracker(TEMP_DIR);
 
-    console.log(`status: ${response.statusCode}`);
+    // Get the source file and save to disk
+    let tempFile = await proxy.getFile(params.uri, tempTracker);
 
-    let contentType = response.headers['content-type'];
-    console.log(contentType);
-
-    if (!contentType) {
-      throw new Error('No content type\n');
-    }
-
-    let splitContentType = contentType.split('/');
-    if (splitContentType[0] != 'image') {
-      throw new Error('Content type not an image\n');
-    }
-
-    let tempFile = __dirname + '/tmp/' + uuid() + '.' + splitContentType[1];
-    tempFile = path.normalize(tempFile);
-
-    let tempTracker = new TempTracker();
-    tempTracker.add(tempFile);
-
-    await writeFile(tempFile, response.body, 'binary');
-
-    var bestFile = await optimize.optimize(tempFile, width, allowWebp, allowJp2, tempTracker);
+    // Generate the best optimized version of the file
+    let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, tempTracker);
     
-    console.log("best file: " + bestFile.path);
-    console.log("best file size: " + bestFile.fileSize);
+    console.log(`optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
 
-    await res.sendFile(
-      bestFile.path, 
-      { 
-        maxAge: 31449600, // Cache for 1 year
-        headers: {
-          "content-type": "image/" + bestFile.type
-        }
-      },
-      async err => {
-        await tempTracker.cleanup();
-        console.log("done");
-      }
-    );
-  }
-  catch (ex) {
+    // Write the optimized file to the browser
+    await proxy.sendFile(res, optimizedFile.path, optimizedFile.type);
+
+  } catch (ex) {
+
     console.log(ex);
     next(ex);
+
+  } finally {
+
+    // Clean up temp files
+    await tempTracker.cleanup();
   }
 });
+
+// Ensure there's a temp dir
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR);
+}
 
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);

@@ -2,11 +2,14 @@
 
 const fs = require('fs');
 const util = require('util');
+const path = require('path');
+const uuid = require('uuid/v4');
 const unlink = util.promisify(fs.unlink);
 
 class TempTracker {
-    constructor() {
+    constructor(tempDir) {
         this.files = [];
+        this.tempDir = tempDir;
     }
 
     add(file) {
@@ -24,6 +27,14 @@ class TempTracker {
             }
         });
         await Promise.all(tasks);
+    }
+
+    create(ext) {
+        let tempFile = `${this.tempDir}/${uuid()}.${ext}`;
+        tempFile = path.normalize(tempFile);
+
+        this.add(tempFile);
+        return tempFile;
     }
 }
 

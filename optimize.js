@@ -138,11 +138,12 @@ const optimize = async function(filePath, width, allowWebp, allowJp2, tempTracke
     console.log("input format: " + file.ext);
 
     let hqSrc = await createHighQualitySrc(file, width, tempTracker);
+    let empty = Promise.resolve(EMPTY_RESULT);
 
-    let pngTask = file.ext == ".png" ? optPng(hqSrc.png, tempTracker) : Promise.resolve(EMPTY_RESULT);
+    let pngTask = file.ext == ".png" ? optPng(hqSrc.png, tempTracker) : empty;
     let jpgTask = optJpg(hqSrc.jpg, tempTracker);
-    let webpTask = allowWebp ? optWebp(hqSrc.png || hqSrc.jpg, tempTracker) : Promise.resolve(EMPTY_RESULT);
-    let jp2Task = allowJp2 ? optJp2(hqSrc.jpg, tempTracker) : Promise.resolve(EMPTY_RESULT);
+    let webpTask = allowWebp ? optWebp(hqSrc.png || hqSrc.jpg, tempTracker) : empty;
+    let jp2Task = allowJp2 ? optJp2(hqSrc.jpg, tempTracker) : empty;
 
     let [pngOutput, jpgOutput, webpOutput, jp2Output] = 
         await Promise.all([ pngTask, jpgTask, webpTask, jp2Task]);
