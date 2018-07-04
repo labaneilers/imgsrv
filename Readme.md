@@ -30,5 +30,6 @@ http://localhost:56789/?w={width}&webp={1 if webp}&jp2={1 if jpeg 2000}&u={sourc
 * PNG (Transparent): https://upload.wikimedia.org/wikipedia/commons/5/5c/Mozilla_dinosaur_head_logo.png
 
 ## TODO
-Force order of parameters with redirect to optimize cache
-Pass in a list of whitelisted domains as an ENV variable
+* Force order of parameters with redirect to optimize cache
+* Pass in a list of whitelisted domains as an ENV variable
+* Logging strategy

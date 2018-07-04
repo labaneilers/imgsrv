@@ -18,15 +18,27 @@ const HOST = '0.0.0.0';
 const app = express();
 app.get('/', async (req, res, next) => {
 
-  //https://upload.wikimedia.org/wikipedia/commons/b/bb/Pickle.jpg
+  //
   try {
-    let uri = req.query.u || 'https://www.vistaprint.com/merch/www/mc/legacy/images/vp-site/vhp/marquee/BasicMarqueeA/GL-outdoor-signage-001-2x-hccd3814da8fbc9167eef977d96ab455e7.png';
-    let width = req.query.w || 500;
+    let uri = req.query.u;
+    let width = parseInt(req.query.w) || 500;
     let allowWebp = req.query.webp == "1";
     let allowJp2 = req.query.jp2 == "1";
 
     console.log(uri);
     console.log(`width: ${width}`);
+
+    if (!uri) {
+      throw new Error("u (uri) parameter required");
+    }
+
+    if (width > 2400) {
+      throw new Error("w parameter too large");
+    }
+
+    if (width < 2) {
+      throw new Error("w parameter too small");
+    }
 
     // TODO whitelist allowed domains
 

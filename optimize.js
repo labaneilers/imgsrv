@@ -38,8 +38,6 @@ const getFileProps = async function (file) {
     return fileData;
 };
 
-// TODO: class to allocate temp files that can then be cleaned up
-
 const createHighQualitySrc = async function(file, width, tempTracker) {
     let hqPng = file.path + ".hiq.png";
     let hqJpg = file.path + ".hiq.jpg";
@@ -50,10 +48,10 @@ const createHighQualitySrc = async function(file, width, tempTracker) {
     // TODO: Check if src is already the right size and skip
     // TODO: Should we skip creating a png here if the source is JPG?
     console.log("resize png: " + hqPng);
-    var pngTask = execAsync('convert "' + file.path + '" -resize ' + width + ' "' + hqPng + '"');
+    var pngTask = execAsync(`convert "${file.path}" -resize ${width} "${hqPng}"`);
 
     console.log("resize jpg: " + hqJpg);
-    var jpgTask = execAsync('convert "' + file.path + '" -quality 100 -resize ' + width + ' "' + hqJpg + '"');
+    var jpgTask = execAsync(`convert "${file.path}" -quality 100 -resize ${width} "${hqJpg}"`);
 
     await Promise.all([ pngTask, jpgTask ]);
 
@@ -68,73 +66,69 @@ const EMPTY_RESULT = {
     fileSize: Number.MAX_SAFE_INTEGER
 };
 
-const optPng = async function(srcPng, tempTracker) {
-    let target = srcPng.replace('.hiq.png', '.opt.png');
+const optCommand = async function(srcPath, srcExt, targetExt, createCommand, handleError, tempTracker) {
+    let target = srcPath.replace('.hiq.' + srcExt, '.opt.' + targetExt);
     tempTracker.add(target);
 
-    console.log("generating png: " + target);
+    console.log(`generating ${targetExt}: ` + target);
     try {
-        await execAsync('pngquant --force --quality=65-80 "' + srcPng + '" --output "' + target + '"');
+        await execAsync(createCommand(srcPath, target));
         let fileSize = await getFileSize(target);
 
         return {
             path: target,
             fileSize: fileSize,
-            type: 'png'
+            type: targetExt
         };
 
     } catch (ex) {
-        console.log("pngquant failed: probably a photo");
+        handleError(ex);
         return EMPTY_RESULT;
     }
 };
 
-const optJpg = async function(srcJpg, tempTracker) {
-    let target = srcJpg.replace('.hiq.jpg', '.opt.jpg');
-    tempTracker.add(target);
-
-    console.log("generating jpg: " + target);
-    await execAsync('jpegoptim -m80 --strip-all --stdout --quiet "' + srcJpg + '" > "' + target + '"');
-
-    let fileSize = await getFileSize(target);
-
-    return {
-        path: target,
-        fileSize: fileSize,
-        type: 'jpg'
-    };
+const optPng = async function(srcPath, tempTracker) {
+    return await optCommand(
+        srcPath, 
+        'png', 
+        'png', 
+        (src, target) => `pngquant --force --quality=65-80 "${src}" --output "${target}"`,
+        ex => console.log("pngquant failed: probably a photo"),
+        tempTracker
+    );
 };
 
-const optJp2 = async function(srcJpg, tempTracker) {
-    let target = srcJpg.replace('.hiq.jpg', '.opt.jp2');
-    tempTracker.add(target);
-
-    console.log("generating jp2: " + target);
-    await execAsync('convert "' + srcJpg + '" -format jp2 -define jp2:rate=32 "' + target + '"');
-
-    let fileSize = await getFileSize(target);
-
-    return {
-        path: target,
-        fileSize: fileSize,
-        type: 'jp2'
-    };
+const optJpg = async function(srcPath, tempTracker) {
+    return await optCommand(
+        srcPath, 
+        'jpg', 
+        'jpg', 
+        (src, target) => `jpegoptim -m80 --strip-all --stdout --quiet "${src}" > "${target}"`,
+        ex => { throw ex; },
+        tempTracker
+    );
 };
 
-const optWebp = async function(src, tempTracker) {
-    let target = src.replace('.hiq.png', '.opt.webp');
-    tempTracker.add(target);
+const optJp2 = async function(srcPath, tempTracker) {
+    return await optCommand(
+        srcPath, 
+        'jpg', 
+        'jp2', 
+        (src, target) => `convert "${src}" -format jp2 -define jp2:rate=32 "${target}"`,
+        ex => { throw ex; },
+        tempTracker
+    );
+};
 
-    console.log("generating webp: " + target);
-    await execAsync('cwebp -quiet -q 80 "' + src + '" -o "' + target + '"');
-
-    let fileSize = await getFileSize(target);
-
-    return {
-        path: target,
-        fileSize: fileSize,
-        type: 'webp'
-    };
+const optWebp = async function(srcPath, tempTracker) {
+    return await optCommand(
+        srcPath, 
+        'png', 
+        'webp', 
+        (src, target) => `cwebp -quiet -q 80 "${src}" -o "${target}"`,
+        ex => { throw ex; },
+        tempTracker
+    );
 };
 
 const optimize = async function(filePath, width, allowWebp, allowJp2, tempTracker) {
@@ -165,67 +159,5 @@ const optimize = async function(filePath, width, allowWebp, allowJp2, tempTracke
     return allOutput[0];
 }
 
-// files
-//     .filter(file => file.is2x)
-//     .forEach(file => {
-//         if (file.ext == ".png") {
-//             var twoXHighQualtiyJpgName = file.path + ".hiq.jpg";
-//             var oneXHighQualtiyJpgName = get1xName(file.path) + ".hiq.jpg";
-//             var twoXCompressedJpgName = file.path + ".opt.jpg";
-//             var oneXCompressedJpgName = get1xName(file.path) + ".opt.jpg";
-//             var twoXHighQualityPNGName = file.path;
-//             var oneXHighQualityPNGName = get1xName(file.path) + ".hiq.png";
-//             var twoXCompressedPNGName = file.path + ".opt.png";
-//             var oneXCompressedPNGName = get1xName(file.path) + ".opt.png";
-//             var twoXWebPName = file.path + ".webp";
-//             var oneXWebPName = get1xName(file.path) + ".webp";
-//             var twoXJpeg2000Name = file.path + ".jp2";
-//             var oneXJpeg2000Name = get1xName(file.path) + ".jp2";
-
-//             // High-quality, uncompressed
-//             exec('convert "' + twoXHighQualityPNGName + '" -quality 100 "' + twoXHighQualtiyJpgName + '"');
-//             exec('convert "' + twoXHighQualityPNGName + '" -quality 100 -resize 50% "' + oneXHighQualtiyJpgName + '"');
-//             exec('convert "' + twoXHighQualityPNGName + '" -resize 50% "' + oneXHighQualityPNGName + '"');
-
-//             // JPEG
-//             exec('jpegoptim -m80 --strip-all --stdout --quiet "' + twoXHighQualtiyJpgName + '" > "' + twoXCompressedJpgName + '"');
-//             exec('jpegoptim -m80 --strip-all --stdout --quiet "' + oneXHighQualtiyJpgName + '" > "' + oneXCompressedJpgName + '"');
-
-//             // PNG
-//             exec('pngquant --force --quality=65-80 "' + twoXHighQualityPNGName + '" --output "' + twoXCompressedPNGName + '"');
-//             exec('pngquant --force --quality=65-80 "' + oneXHighQualityPNGName + '" --output "' + oneXCompressedPNGName + '"');
-
-//             // Webp
-//             exec('cwebp -quiet -q 80 "' + twoXHighQualityPNGName + '" -o "' + twoXWebPName + '"');
-//             exec('cwebp -quiet -q 80 "' + oneXHighQualityPNGName + '" -o "' + oneXWebPName + '"');
-            
-//             // JPEG 2000
-//             exec('convert "' + twoXHighQualityPNGName + '" -format jp2 -define jp2:rate=32 "' + twoXJpeg2000Name + '"');
-//             exec('convert "' + oneXHighQualityPNGName + '" -format jp2 -define jp2:rate=32 "' + oneXJpeg2000Name + '"');
-
-//             // Output summary
-//             var twoXSummary = getOptimizationOverview(
-//                 twoXHighQualityPNGName, 
-//                 [ twoXCompressedJpgName, twoXCompressedPNGName ], 
-//                 twoXWebPName, 
-//                 twoXJpeg2000Name);
-//             renderOptimizationSummary(twoXSummary);
-            
-
-//             var oneXSummary = getOptimizationOverview(
-//                 oneXHighQualityPNGName, 
-//                 [ oneXCompressedJpgName, oneXCompressedPNGName ], 
-//                 oneXWebPName, 
-//                 oneXJpeg2000Name);
-//             renderOptimizationSummary(oneXSummary);
-
-//             optMap[file.path] = buildOptMapEntry(oneXSummary, twoXSummary);
-//         }
-//     });
-
-// //fs.writeFileSync("summary.json", JSON.stringify(optMap, null, 4));
-
-exports.getImageSize = getImageSize;
-exports.getFileSize = getFileSize;
 exports.optimize = optimize;
 
