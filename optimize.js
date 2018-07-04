@@ -1,111 +1,28 @@
 const path = require('path');
 const fs = require('fs');
 const util = require('util');
-const readdir = util.promisify(fs.readdir);
 const stat = util.promisify(fs.stat);
 const execAsync = util.promisify(require('child_process').exec);
-const exec = function(cmd) {
-    execSync(cmd, {stdio:[0,1,2]});
-}
 
-var listFiles = async function(dir, filelist) {
-    let files = await readdir(dir);
-    filelist = filelist || [];
-    files.forEach(async function(file) {
-        if (fs.statSync(path.join(dir, file)).isDirectory()) {
-            filelist = await listFiles(path.join(dir, file), filelist);
-        }
-        else {
-            filelist.push(path.join(dir, file));
-        }
-    });
-    return filelist;
-};
-
-var imageSize = async function(path) {
-    var size = await execAsync("identify -format '%wx%h' " + path);
-    var sizeArr = size.stdout.replace(/'/gi, '').split('x');
+const getImageSize = async function(path) {
+    let size = await execAsync("identify -format '%wx%h' " + path);
+    let sizeArr = size.stdout.replace(/'/gi, '').split('x');
     return {
         width: parseInt(sizeArr[0]),
         height: parseInt(sizeArr[1])
     };
 };
 
-var fileSize = async function(filename) {
-    const stats = await stat(filename);
-    const fileSizeInBytes = stats.size;
+const getFileSize = async function(filename) {
+    let stats = await stat(filename);
+    let fileSizeInBytes = stats.size;
     return fileSizeInBytes;
 };
 
-var get1xName = function(path) {
-    return path.replace("-2x.", "-1x.");
-};
-
-var getFileWithFileSize = async function(file) {
-    return {
-        path: file,
-        fileSize: await fileSize(file) 
-    };
-};
-
-var getFileSizes = async function(files) {
-    return files
-        .map(await getFileWithFileSize)
-        .sort((a, b) => a.fileSize - b.fileSize);
-};
-
-var getOptimizationOverview = function(originalFile, newFiles, webpFile, jpeg2000File) {
-    var ret = {
-        originalFile: getFileWithFileSize(originalFile),
-        newFiles: getFileSizes(newFiles),
-        webpFile: getFileWithFileSize(webpFile),
-        jpeg2000File: getFileWithFileSize(jpeg2000File)
-    };
-
-    ret.best = ret.newFiles[0];
-    ret.changedFormat = path.extname(ret.best.path) != path.extname(ret.originalFile.path);
-    ret.savings = ret.originalFile.fileSize - ret.best.fileSize;
-    ret.webpSavings = ret.best.fileSize - ret.webpFile.fileSize;
-    ret.jpeg2000Savings = ret.best.fileSize - ret.jpeg2000File.fileSize;
-
-    return ret;
-};
-
-var renderOptimizationSummary = function(summary) {
-    var changedFormat = summary.changedFormat ? "CHANGED to " + path.extname(summary.best.path) : "";
-    console.log(summary.originalFile.path + ":");
-    if (changedFormat) {
-        console.log("    " + changedFormat);
-    }
-    console.log("    new: " + summary.best.path);
-    console.log("    saved: " + summary.savings + " bytes");
-    if (summary.webpSavings > 0) {
-        console.log("    webp saves additional: " + summary.webpSavings + " bytes")
-    }
-    if (summary.jpeg2000Savings > 0) {
-        console.log("    jpeg2000 saves additional: " + summary.jpeg2000Savings + " bytes")
-    }
-};
-
-var buildOptMapSummaryEntry = function(summary) {
-    return {
-        all: summary.best.path,
-        webp: summary.webpSavings > 0 ? summary.webpFile.path : summary.best.path,
-        jpeg2000: summary.jpeg2000Savings > 0 ? summary.jpeg2000File.path : summary.best.path
-    };
-};
-
-var buildOptMapEntry = function(oneXSummary, twoXSummary) {
-    return {
-       oneX: buildOptMapSummaryEntry(oneXSummary),
-       twoX: buildOptMapSummaryEntry(twoXSummary),
-    };
-};
-
-async function getFileProps(file) {
+const getFileProps = async function (file) {
     var fileData = {
         path: file,
-        size: await imageSize(file),
+        size: await getImageSize(file),
         ext: path.extname(file)
     };
 
@@ -117,45 +34,126 @@ async function getFileProps(file) {
     }
 
     return fileData;
-}
+};
 
-async function optimize(filePath, width) {
+// TODO: class to allocate temp files that can then be cleaned up
+
+const createHighQualitySrc = async function(file, width) {
+    let hqPng = file.path + ".hiq.png";
+    let hqJpg = file.path + ".hiq.jpg";
+
+    // TODO: Check if src is already the right size and skip
+    // TODO: Should we skip creating a png here if the source is JPG?
+    console.log("resize png: " + hqPng);
+    var pngTask = execAsync('convert "' + file.path + '" -resize ' + width + ' "' + hqPng + '"');
+
+    console.log("resize jpg: " + hqJpg);
+    var jpgTask = execAsync('convert "' + file.path + '" -quality 100 -resize ' + width + ' "' + hqJpg + '"');
+
+    await Promise.all([ pngTask, jpgTask ]);
+
+    return {
+        png: hqPng,
+        jpg: hqJpg
+    };
+};
+
+const EMPTY_RESULT = {
+    path: null,
+    fileSize: Number.MAX_SAFE_INTEGER
+};
+
+const optPng = async function(srcPng) {
+    let target = srcPng.replace('.hiq.png', '.opt.png');
+
+    console.log("generating png: " + target);
+    try {
+        await execAsync('pngquant --force --quality=65-80 "' + srcPng + '" --output "' + target + '"');
+        let fileSize = await getFileSize(target);
+
+        return {
+            path: target,
+            fileSize: fileSize,
+            type: 'png'
+        };
+
+    } catch (ex) {
+        console.log("pngquant failed: probably a photo");
+        return EMPTY_RESULT;
+    }
+};
+
+const optJpg = async function(srcJpg) {
+    let target = srcJpg.replace('.hiq.jpg', '.opt.jpg');
+
+    console.log("generating jpg: " + target);
+    await execAsync('jpegoptim -m80 --strip-all --stdout --quiet "' + srcJpg + '" > "' + target + '"');
+
+    let fileSize = await getFileSize(target);
+
+    return {
+        path: target,
+        fileSize: fileSize,
+        type: 'jpg'
+    };
+};
+
+const optJp2 = async function(srcJpg) {
+    let target = srcJpg.replace('.hiq.jpg', '.opt.jp2');
+
+    console.log("generating jp2: " + target);
+    await execAsync('convert "' + srcJpg + '" -format jp2 -define jp2:rate=32 "' + target + '"');
+
+    let fileSize = await getFileSize(target);
+
+    return {
+        path: target,
+        fileSize: fileSize,
+        type: 'jp2'
+    };
+};
+
+const optWebp = async function(src) {
+    let target = src.replace('.hiq.png', '.opt.webp');
+
+    console.log("generating webp: " + target);
+    await execAsync('cwebp -quiet -q 80 "' + src + '" -o "' + target + '"');
+
+    let fileSize = await getFileSize(target);
+
+    return {
+        path: target,
+        fileSize: fileSize,
+        type: 'webp'
+    };
+};
+
+const optimize = async function(filePath, width, allowWebp, allowJp2) {
 
     let file = await getFileProps(filePath);
 
-    let srcJpg = null;
-    let srcPng = null;
-    let targetJpg = file.path + ".opt.jpg";
-    let targetPng = file.path + ".opt.png";
+    console.log("input format: " + file.ext);
 
-    if (file.ext == ".png") {
-        srcJpg = file.path + ".hiq.jpg"
-        srcPng = file.path + ".hiq.png";
-        await execAsync('convert "' + file.path + '" -resize ' + width + ' "' + srcPng + '"');
-    } else if (file.ext == ".jpg") {
-        srcJpg = file.path;
-    }
+    let hqSrc = await createHighQualitySrc(file, width);
 
-    await execAsync('convert "' + file.path + '" -quality 100 -resize ' + width + ' "' + srcJpg + '"');
-    await execAsync('jpegoptim -m80 --strip-all --stdout --quiet "' + srcJpg + '" > "' + targetJpg + '"');
-    await execAsync('pngquant --force --quality=65-80 "' + srcPng + '" --output "' + targetPng + '"');
+    let pngTask = file.ext == ".png" ? optPng(hqSrc.png) : Promise.resolve(EMPTY_RESULT);
+    let jpgTask = optJpg(hqSrc.jpg);
+    let webpTask = allowWebp ? optWebp(hqSrc.png || hqSrc.jpg) : Promise.resolve(EMPTY_RESULT);
+    let jp2Task = allowJp2 ? optJp2(hqSrc.jpg) : Promise.resolve(EMPTY_RESULT);
 
-    var jpgSize = await fileSize(targetJpg);
-    var pngSize = await fileSize(targetPng);
+    let [pngOutput, jpgOutput, webpOutput, jp2Output] = 
+        await Promise.all([ pngTask, jpgTask, webpTask, jp2Task]);
+    
+    // Sort results by file size
+    let allOutput = [pngOutput, jpgOutput, webpOutput, jp2Output]
+        .filter(o => o.type);
+    allOutput.sort((a, b) => a.fileSize - b.fileSize);
 
-    if (jpgSize < pngSize) {
-        return {
-            path: targetJpg,
-            fileSize: jpgSize
-        };
-    }
-    else
-    {
-        return {
-            path: targetPng,
-            fileSize: pngSize
-        };
-    }
+    allOutput.forEach(o => {
+        console.log(`${o.type}: ${o.fileSize}`);
+    });
+
+    return allOutput[0];
 }
 
 // files
@@ -218,7 +216,7 @@ async function optimize(filePath, width) {
 
 // //fs.writeFileSync("summary.json", JSON.stringify(optMap, null, 4));
 
-exports.imageSize = imageSize;
-exports.fileSize = fileSize;
+exports.getImageSize = getImageSize;
+exports.getFileSize = getFileSize;
 exports.optimize = optimize;
 

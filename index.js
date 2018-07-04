@@ -17,64 +17,70 @@ const HOST = '0.0.0.0';
 
 // App
 const app = express();
-app.get('/', async (req, res) => {
+app.get('/', async (req, res, next) => {
 
-  // TODO querystring
-  let uri = 'https://www.vistaprint.com/merch/www/mc/legacy/images/vp-site/vhp/marquee/BasicMarqueeA/GL-outdoor-signage-001-2x-hccd3814da8fbc9167eef977d96ab455e7.png';
+  //https://upload.wikimedia.org/wikipedia/commons/b/bb/Pickle.jpg
+  try {
+    let uri = req.query.u || 'https://www.vistaprint.com/merch/www/mc/legacy/images/vp-site/vhp/marquee/BasicMarqueeA/GL-outdoor-signage-001-2x-hccd3814da8fbc9167eef977d96ab455e7.png';
+    let width = req.query.w || 500;
+    let allowWebp = req.query.webp == "1";
+    let allowJp2 = req.query.jp2 == "1";
 
-  let options = {
-      method: 'GET',
-      encoding: 'binary',
-      uri: uri,
-      resolveWithFullResponse: true
-  };
+    console.log(uri);
+    console.log(`width: ${width}`);
 
-  let response = await request(options);
+    // TODO whitelist allowed domains
 
-  console.log(response.statusCode);
+    let response = await request({
+        method: 'GET',
+        encoding: 'binary',
+        uri: uri,
+        resolveWithFullResponse: true
+      });
 
-  let contentType = response.headers['content-type'];
-  console.log(contentType);
+    console.log(`status: ${response.statusCode}`);
 
-  if (!contentType) {
-    res.send('No content type\n');
-    return;
-  }
+    let contentType = response.headers['content-type'];
+    console.log(contentType);
 
-  let splitContentType = contentType.split('/');
-  if (splitContentType[0] != 'image') {
-    res.send('Content type not an image\n');
-    return;
-  }
-
-  let tempFile = __dirname + '/tmp/' + uuid() + '.' + splitContentType[1];
-  tempFile = path.normalize(tempFile);
-
-  await writeFile(tempFile, response.body, 'binary');
-
-  let size = await optimize.imageSize(tempFile);
-  let fileSize = await optimize.fileSize(tempFile);
-  var bestFile = await optimize.optimize(tempFile, 300);
-
-  console.log(JSON.stringify(size));
-  console.log(fileSize);
-  console.log("new file: " + bestFile.path);
-  console.log(bestFile.fileSize);
-
-  await res.sendFile(
-    bestFile.path, 
-    { 
-      maxAge: 31449600, 
-      headers: {
-        "content-type": "image/png"
-      }
-    },
-    async err => {
-      await deleteFile(bestFile.path);
-      await deleteFile(tempFile);
-      console.log("done");
+    if (!contentType) {
+      throw new Error('No content type\n');
     }
-  );
+
+    let splitContentType = contentType.split('/');
+    if (splitContentType[0] != 'image') {
+      throw new Error('Content type not an image\n');
+    }
+
+    let tempFile = __dirname + '/tmp/' + uuid() + '.' + splitContentType[1];
+    tempFile = path.normalize(tempFile);
+
+    await writeFile(tempFile, response.body, 'binary');
+
+    var bestFile = await optimize.optimize(tempFile, width, allowWebp, allowJp2);
+    
+    console.log("best file: " + bestFile.path);
+    console.log("best file size: " + bestFile.fileSize);
+
+    await res.sendFile(
+      bestFile.path, 
+      { 
+        maxAge: 31449600, // Cache for 1 year
+        headers: {
+          "content-type": "image/" + bestFile.type
+        }
+      },
+      async err => {
+        await deleteFile(bestFile.path);
+        await deleteFile(tempFile);
+        console.log("done");
+      }
+    );
+  }
+  catch (ex) {
+    console.log(ex);
+    next(ex);
+  }
 });
 
 app.listen(PORT, HOST);
