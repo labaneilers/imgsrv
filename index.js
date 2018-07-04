@@ -7,9 +7,8 @@ const fs = require('fs');
 const uuid = require('uuid/v4');
 const util = require('util');
 const writeFile = util.promisify(fs.writeFile);
-const deleteFile = util.promisify(fs.unlink);
-const awaitWriteStream = require('await-stream-ready').write;
 const optimize = require("./optimize");
+const TempTracker = require("./temptracker").TempTracker;
 
 // Constants
 const PORT = 80;
@@ -55,9 +54,12 @@ app.get('/', async (req, res, next) => {
     let tempFile = __dirname + '/tmp/' + uuid() + '.' + splitContentType[1];
     tempFile = path.normalize(tempFile);
 
+    let tempTracker = new TempTracker();
+    tempTracker.add(tempFile);
+
     await writeFile(tempFile, response.body, 'binary');
 
-    var bestFile = await optimize.optimize(tempFile, width, allowWebp, allowJp2);
+    var bestFile = await optimize.optimize(tempFile, width, allowWebp, allowJp2, tempTracker);
     
     console.log("best file: " + bestFile.path);
     console.log("best file size: " + bestFile.fileSize);
@@ -71,8 +73,7 @@ app.get('/', async (req, res, next) => {
         }
       },
       async err => {
-        await deleteFile(bestFile.path);
-        await deleteFile(tempFile);
+        await tempTracker.cleanup();
         console.log("done");
       }
     );

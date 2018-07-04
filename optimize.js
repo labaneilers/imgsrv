@@ -1,3 +1,5 @@
+'use strict';
+
 const path = require('path');
 const fs = require('fs');
 const util = require('util');
@@ -38,9 +40,12 @@ const getFileProps = async function (file) {
 
 // TODO: class to allocate temp files that can then be cleaned up
 
-const createHighQualitySrc = async function(file, width) {
+const createHighQualitySrc = async function(file, width, tempTracker) {
     let hqPng = file.path + ".hiq.png";
     let hqJpg = file.path + ".hiq.jpg";
+
+    tempTracker.add(hqPng);
+    tempTracker.add(hqJpg);
 
     // TODO: Check if src is already the right size and skip
     // TODO: Should we skip creating a png here if the source is JPG?
@@ -63,8 +68,9 @@ const EMPTY_RESULT = {
     fileSize: Number.MAX_SAFE_INTEGER
 };
 
-const optPng = async function(srcPng) {
+const optPng = async function(srcPng, tempTracker) {
     let target = srcPng.replace('.hiq.png', '.opt.png');
+    tempTracker.add(target);
 
     console.log("generating png: " + target);
     try {
@@ -83,8 +89,9 @@ const optPng = async function(srcPng) {
     }
 };
 
-const optJpg = async function(srcJpg) {
+const optJpg = async function(srcJpg, tempTracker) {
     let target = srcJpg.replace('.hiq.jpg', '.opt.jpg');
+    tempTracker.add(target);
 
     console.log("generating jpg: " + target);
     await execAsync('jpegoptim -m80 --strip-all --stdout --quiet "' + srcJpg + '" > "' + target + '"');
@@ -98,8 +105,9 @@ const optJpg = async function(srcJpg) {
     };
 };
 
-const optJp2 = async function(srcJpg) {
+const optJp2 = async function(srcJpg, tempTracker) {
     let target = srcJpg.replace('.hiq.jpg', '.opt.jp2');
+    tempTracker.add(target);
 
     console.log("generating jp2: " + target);
     await execAsync('convert "' + srcJpg + '" -format jp2 -define jp2:rate=32 "' + target + '"');
@@ -113,8 +121,9 @@ const optJp2 = async function(srcJpg) {
     };
 };
 
-const optWebp = async function(src) {
+const optWebp = async function(src, tempTracker) {
     let target = src.replace('.hiq.png', '.opt.webp');
+    tempTracker.add(target);
 
     console.log("generating webp: " + target);
     await execAsync('cwebp -quiet -q 80 "' + src + '" -o "' + target + '"');
@@ -128,18 +137,18 @@ const optWebp = async function(src) {
     };
 };
 
-const optimize = async function(filePath, width, allowWebp, allowJp2) {
+const optimize = async function(filePath, width, allowWebp, allowJp2, tempTracker) {
 
     let file = await getFileProps(filePath);
 
     console.log("input format: " + file.ext);
 
-    let hqSrc = await createHighQualitySrc(file, width);
+    let hqSrc = await createHighQualitySrc(file, width, tempTracker);
 
-    let pngTask = file.ext == ".png" ? optPng(hqSrc.png) : Promise.resolve(EMPTY_RESULT);
-    let jpgTask = optJpg(hqSrc.jpg);
-    let webpTask = allowWebp ? optWebp(hqSrc.png || hqSrc.jpg) : Promise.resolve(EMPTY_RESULT);
-    let jp2Task = allowJp2 ? optJp2(hqSrc.jpg) : Promise.resolve(EMPTY_RESULT);
+    let pngTask = file.ext == ".png" ? optPng(hqSrc.png, tempTracker) : Promise.resolve(EMPTY_RESULT);
+    let jpgTask = optJpg(hqSrc.jpg, tempTracker);
+    let webpTask = allowWebp ? optWebp(hqSrc.png || hqSrc.jpg, tempTracker) : Promise.resolve(EMPTY_RESULT);
+    let jp2Task = allowJp2 ? optJp2(hqSrc.jpg, tempTracker) : Promise.resolve(EMPTY_RESULT);
 
     let [pngOutput, jpgOutput, webpOutput, jp2Output] = 
         await Promise.all([ pngTask, jpgTask, webpTask, jp2Task]);
