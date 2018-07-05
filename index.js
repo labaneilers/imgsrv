@@ -42,13 +42,25 @@ app.get('/', async (req, res, next) => {
 
   } catch (ex) {
 
-    console.log(ex);
-    next(ex);
+    if (process.env.NODE_ENV == "production") {
+      res
+        .status(500)
+        .set({
+          'cache-control': 'no-cache'
+        })
+        .send(`<html><head><title>Error</title></head><body><pre>${ex.message}</pre></body></html>`);
+
+      console.log(ex);
+    } else {
+      next(ex);
+    }
 
   } finally {
 
     // Clean up temp files
-    await tempTracker.cleanup();
+    if (tempTracker) {
+      await tempTracker.cleanup();
+    }
   }
 });
 
@@ -59,3 +71,4 @@ if (!fs.existsSync(TEMP_DIR)) {
 
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
+console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);

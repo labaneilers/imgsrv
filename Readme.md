@@ -29,8 +29,9 @@ http://localhost:56789/?w={width}&webp={1 if webp}&jp2={1 if jpeg 2000}&u={sourc
 * JPEG (illustration): https://upload.wikimedia.org/wikipedia/commons/f/fd/Lend_To_Defend_his_Right_to_be_Free_poster_by_Tom_Purvis.jpg
 * PNG (Photo): https://www.vistaprint.com/merch/www/mc/legacy/images/vp-site/vhp/marquee/BasicMarqueeA/GL-outdoor-signage-001-2x-hccd3814da8fbc9167eef977d96ab455e7.png
 * PNG (Transparent): https://upload.wikimedia.org/wikipedia/commons/5/5c/Mozilla_dinosaur_head_logo.png
+* PNG (Transparent, flat): https://www.iconspng.com/uploads/office-executive-man-flat-design/office-executive-man-flat-design.png
 
 ## TODO
-* Force order of parameters with redirect to optimize cache
 * Pass in a list of whitelisted domains as an ENV variable
 * Logging strategy
+* JpegXR for IE
