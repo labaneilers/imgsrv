@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "debug": "nodemon --legacy-watch --watch ./ --inspect=0.0.0.0:5858 --nolazy ./index.js",
+    "docker:debug": "docker-compose up",
     "docker:build": "docker build . -t imgsrv",
     "docker:run": "docker run --name imgsrv -p 56789:80 imgsrv",
     "docker:stop": "docker stop imgsrv & docker rm imgsrv",
@@ -18,5 +20,8 @@
     "express": "^4.16.3",
     "request": "^2.87.0",
     "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.5"
   }
 }

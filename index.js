@@ -19,6 +19,8 @@ const TEMP_DIR = __dirname + '/tmp';
 const app = express();
 app.get('/', async (req, res, next) => {
 
+  console.log("fuu");
+  
   let tempTracker;
 
   try {
