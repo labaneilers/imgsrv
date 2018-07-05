@@ -1,13 +1,11 @@
 'use strict';
 
-const path = require('path');
 const request = require('request');
 const util = require('util');
 const fs = require('fs');
-const writeFile = util.promisify(fs.writeFile);
 
 const validateResponse = function(response) {
-  console.log(`status: ${response.statusCode}`);
+  console.log(`Origin status code: ${response.statusCode}`);
 
   if (response.statusCode != 200) {
       throw new Error(`Requested image failed with status code: ${response.statusCode}`)
@@ -49,9 +47,15 @@ const getFile = function (uri, tempTracker, callback) {
       callback(ex);
     })
     .on('response', response => {
-      let validation = validateResponse(response);  
-      tempFile = tempTracker.create(validation.ext);
-      fileStream = fs.createWriteStream(tempFile, { encoding: 'binary' });
+      try {
+        let validation = validateResponse(response);  
+        tempFile = tempTracker.create(validation.ext);
+        fileStream = fs.createWriteStream(tempFile, { encoding: 'binary' });
+      } catch (ex) {
+        callback(ex);
+        return;
+      }
+      
       fileStream.on('finish', () => { 
         callback(null, tempFile);
       });
@@ -60,7 +64,11 @@ const getFile = function (uri, tempTracker, callback) {
         callback(ex);
       });
 
-      r.pipe(fileStream);
+      try {
+        r.pipe(fileStream);
+      } catch (ex) {
+        callback(ex);
+      }
     }); 
 };
 
@@ -72,7 +80,8 @@ const sendFile = async function(response, filePath, ext) {
     { 
       maxAge: 31449600, // Cache for 1 year
       headers: {
-        "content-type": "image/" + ext
+        'content-type': 'image/' + ext,
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36' //'imgsrv proxy (https://github.com/labaneilers/imgsrv)'
       }
     }
   );
