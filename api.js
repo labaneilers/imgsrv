@@ -1,5 +1,17 @@
 'use strict';
 
+class NonCanonicalParamsError extends Error {
+  constructor(canonicalQs, actualQs) {
+    let message = `Params order and encoding is strict to enforce cachability\nCanonical: ${canonicalQs}\nActual:${actualQs}`;
+    super(message);
+    
+    this.canonicalQs = canonicalQs;
+    this.actualQs = actualQs;
+
+    Error.captureStackTrace(this, NonCanonicalParamsError);
+  }
+}
+
 const querystring = require('querystring');
 const url = require('url');
 
@@ -22,10 +34,10 @@ function getCanonicalQueryString(options) {
 function validateCanonicalQuerystring(request, options)
 {
   let canonicalQs = getCanonicalQueryString(options);
-  let suppliedQs = url.parse(request.url).query;
+  let actualQs = url.parse(request.url).query;
 
-  if (canonicalQs != suppliedQs) {
-    throw new Error(`Params order and encoding is strict to enforce cachability\nCanonical: ${canonicalQs}\nActual:${suppliedQs}`);
+  if (canonicalQs != actualQs) {
+    throw new NonCanonicalParamsError(canonicalQs, actualQs);
   }
 }
 
@@ -57,3 +69,4 @@ function parseParams(request) {
 }
 
 exports.parseParams = parseParams;
+exports.NonCanonicalParamsError = NonCanonicalParamsError;

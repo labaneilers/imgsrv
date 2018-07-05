@@ -52,6 +52,11 @@ app.get('/', async (req, res, next) => {
 
       console.log(ex);
     } else {
+      if (ex instanceof api.NonCanonicalParamsError) {
+        res.redirect("/?" + ex.canonicalQs);
+        return;
+      }
+
       next(ex);
     }
 
