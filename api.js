@@ -27,6 +27,9 @@ function getCanonicalQueryString(options) {
   if (options.allowJp2) {
     canonicalQs.jp2 = "1";
   }
+  if (options.allowJxr) {
+    canonicalQs.jxr = "1";
+  }
 
   return querystring.stringify(canonicalQs);
 }
@@ -47,7 +50,8 @@ function parseParams(request) {
         uri: request.query.u,
         width: parseInt(request.query.w) || 500,
         allowWebp: request.query.webp == "1",
-        allowJp2: request.query.jp2 == "1"
+        allowJp2: request.query.jp2 == "1",
+        allowJxr: request.query.jxr == "1"
     };
 
     if (!options.uri) {

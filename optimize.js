@@ -78,7 +78,8 @@ const optCommand = async function(srcPath, srcExt, targetExt, createCommand, han
         return {
             path: target,
             fileSize: fileSize,
-            type: targetExt
+            type: targetExt,
+            mimeType: "image/" + targetExt
         };
 
     } catch (ex) {
@@ -131,7 +132,27 @@ const optWebp = async function(srcPath, tempTracker) {
     );
 };
 
-const optimize = async function(filePath, width, allowWebp, allowJp2, tempTracker) {
+const optJxr = async function(srcPath, tempTracker) {
+
+    var bmpPath = srcPath.replace('.hiq.png', '.hiq.bmp');
+    tempTracker.add(bmpPath);
+    await execAsync(`convert "${srcPath}" -alpha off -colorspace RGB "${bmpPath}"`);
+
+    let optimized = await optCommand(
+        srcPath, 
+        'png', 
+        'jxr', 
+        (src, target) => `JxrEncApp -i "${bmpPath}" -o "${target}" -q 0.4`,
+        ex => { throw ex; },
+        tempTracker
+    );
+
+    optimized.mimeType = "image/vnd.ms-photo" // Wacky mime type: image/jxr doesn't work in IE
+
+    return optimized;
+};
+
+const optimize = async function(filePath, width, allowWebp, allowJp2, allowJxr, tempTracker) {
 
     let file = await getFileProps(filePath);
 
@@ -144,12 +165,13 @@ const optimize = async function(filePath, width, allowWebp, allowJp2, tempTracke
     let jpgTask = optJpg(hqSrc.jpg, tempTracker);
     let webpTask = allowWebp ? optWebp(hqSrc.png || hqSrc.jpg, tempTracker) : empty;
     let jp2Task = allowJp2 ? optJp2(hqSrc.jpg, tempTracker) : empty;
+    let jxrTask = allowJxr ? optJxr(hqSrc.png, tempTracker) : empty;
 
-    let [pngOutput, jpgOutput, webpOutput, jp2Output] = 
-        await Promise.all([ pngTask, jpgTask, webpTask, jp2Task]);
+    let [pngOutput, jpgOutput, webpOutput, jp2Output, jxrOutput] = 
+        await Promise.all([ pngTask, jpgTask, webpTask, jp2Task, jxrTask]);
     
     // Sort results by file size
-    let allOutput = [pngOutput, jpgOutput, webpOutput, jp2Output]
+    let allOutput = [pngOutput, jpgOutput, webpOutput, jp2Output, jxrOutput]
         .filter(o => o.type);
     allOutput.sort((a, b) => a.fileSize - b.fileSize);
 

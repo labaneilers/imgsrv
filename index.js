@@ -17,10 +17,9 @@ const TEMP_DIR = __dirname + '/tmp';
 
 // App
 const app = express();
+
 app.get('/', async (req, res, next) => {
 
-  console.log("fuu");
-  
   let tempTracker;
 
   try {
@@ -35,12 +34,12 @@ app.get('/', async (req, res, next) => {
     let tempFile = await proxy.getFile(params.uri, tempTracker);
 
     // Generate the best optimized version of the file
-    let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, tempTracker);
+    let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, params.allowJxr, tempTracker);
     
     console.log(`optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
 
     // Write the optimized file to the browser
-    await proxy.sendFile(res, optimizedFile.path, optimizedFile.type);
+    await proxy.sendFile(res, optimizedFile.path, optimizedFile.mimeType);
 
   } catch (ex) {
 
@@ -69,6 +68,10 @@ app.get('/', async (req, res, next) => {
       await tempTracker.cleanup();
     }
   }
+});
+
+app.get('/frame', async (req, res, next) => {
+  res.send(`<html><head><title>Error</title></head><body><img src="${req.originalUrl.replace("/frame?", "/?")}" /></body></html>`);
 });
 
 // Ensure there's a temp dir

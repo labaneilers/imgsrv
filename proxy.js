@@ -41,7 +41,12 @@ const getFile = function (uri, tempTracker, callback) {
   // this uses less memory than storing the whole file in a buffer.
   // Use callbacks and wrap with a promise.
 
-  let r = request.get(uri);
+  let r = request.get({
+    uri: uri,
+    headers: {
+      "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36' //'imgsrv proxy (https://github.com/labaneilers/imgsrv)'
+    }
+  });
 
   r.on('error', ex => {
       callback(ex);
@@ -72,7 +77,7 @@ const getFile = function (uri, tempTracker, callback) {
     }); 
 };
 
-const sendFile = async function(response, filePath, ext) {
+const sendFile = async function(response, filePath, mimeType) {
   let sendFile = util.promisify(response.sendFile.bind(response)); 
 
   await sendFile(
@@ -80,8 +85,7 @@ const sendFile = async function(response, filePath, ext) {
     { 
       maxAge: 31449600, // Cache for 1 year
       headers: {
-        'content-type': 'image/' + ext,
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36' //'imgsrv proxy (https://github.com/labaneilers/imgsrv)'
+        'content-type': mimeType      
       }
     }
   );

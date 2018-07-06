@@ -16,25 +16,27 @@ class TempTracker {
         this.files.push(file);
     }
 
-    async cleanup() {
-        var tasks = this.files.map(async f => {
-            try {
-                return await unlink(f);
-            } catch (ex) {
-                if (ex.code != "ENOENT") {
-                    console.log(ex);
-                }
-            }
-        });
-        await Promise.all(tasks);
-    }
-
     create(ext) {
         let tempFile = `${this.tempDir}/${uuid()}.${ext}`;
         tempFile = path.normalize(tempFile);
 
         this.add(tempFile);
         return tempFile;
+    }
+
+    async cleanup() {
+        return;
+
+        // var tasks = this.files.map(async f => {
+        //     try {
+        //         return await unlink(f);
+        //     } catch (ex) {
+        //         if (ex.code != "ENOENT") {
+        //             console.log(ex);
+        //         }
+        //     }
+        // });
+        // await Promise.all(tasks);
     }
 }
 
