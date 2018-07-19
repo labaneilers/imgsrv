@@ -25,6 +25,13 @@ Since the size savings for these formats is significant, it is worth it for page
 http://localhost:56789/?w={width}&webp={1 if webp}&jp2={1 if jpeg 2000}&u={source image uri}
 ```
 
+## Detection
+
+There are two ways to serve images with the correct parameters for the supported image formats:
+
+1. The PICTURE HTML element: http://www.useragentman.com/blog/2015/01/14/using-webp-jpeg2000-jpegxr-apng-now-with-picturefill-and-modernizr/
+2. Server side feature detection: Detect on the server side and construct URLs when you render IMG tags. https://blog.elijaa.org/2016/01/29/detect-webp-jpeg2000-jpegxr-image-format-support-in-php/
+
 ## Example source images
 
 * JPEG (photo with flat areas): https://upload.wikimedia.org/wikipedia/commons/b/bb/Pickle.jpg
