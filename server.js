@@ -9,6 +9,7 @@ const optimize = require("./optimize");
 const TempTracker = require("./temptracker").TempTracker;
 const api = require('./api');
 const proxy = require('./proxy');
+const DomainWhitelist = require("./domain-whitelist").DomainWhitelist;
 
 // Constants
 const PORT = 80;
@@ -18,6 +19,10 @@ const TEMP_DIR = __dirname + '/tmp';
 // App
 const app = express();
 
+// Create a whitelist of allowed domains for source images
+// If none is supplied, all domains are allowed
+let domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
+
 app.get('/', async (req, res, next) => {
 
   let tempTracker;
@@ -26,8 +31,11 @@ app.get('/', async (req, res, next) => {
 
     let params = api.parseParams(req);
 
-    // TODO whitelist allowed domains
+    // Validate the source URL is in the whitelist of allowed domains
+    // Reduces surface area for DOS attack
+    domainWhitelist.validate(params.uri);
 
+    // Keep track of temp files so we can clean them up after each request
     tempTracker = new TempTracker(TEMP_DIR);
 
     // Get the source file and save to disk
@@ -78,6 +86,8 @@ app.get('/frame', async (req, res, next) => {
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR);
 }
+
+domainWhitelist.printStatus(process.stdout);
 
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
