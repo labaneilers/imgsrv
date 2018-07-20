@@ -2,10 +2,10 @@
   "name": "imgsrv",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "debug": "nodemon --legacy-watch --watch ./ --inspect=0.0.0.0:5858 --nolazy ./index.js",
+    "start": "node server.js",
+    "debug": "nodemon --legacy-watch --watch ./ --inspect=0.0.0.0:5858 --nolazy ./server.js",
     "docker:debug": "docker-compose up",
     "docker:build": "docker build . -t imgsrv",
     "docker:run": "docker run --name imgsrv -p 56789:80 imgsrv",

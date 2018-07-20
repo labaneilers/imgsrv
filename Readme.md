@@ -47,5 +47,7 @@ http://localhost:56789/?u=https://www.vistaprint.com/merch/www/mc/legacy/images/
 ## TODO
 * Pass in a list of whitelisted domains as an ENV variable
 * Logging strategy
+* Check if the raw image source is already the right size and skip resizing
+* Short circuit creating a PNG when the source image is a JPG- it will be unlikely to work.
 
 
