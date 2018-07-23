@@ -25,12 +25,37 @@ const app = express();
 // If none is supplied, all domains are allowed
 let domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
 
+var errorHandlingMiddleware = function (err, req, res, next) {
+  console.log("ERROR TRACKING!");
+
+  if (process.env.NODE_ENV == "production") {
+    console.log(err);
+
+    res
+      .status(500)
+      .set({
+        'cache-control': 'no-cache'
+      })
+      .send(`<html><head><title>Error</title></head><body><pre>${err.message}</pre></body></html>`);
+
+  } else {
+    if (err instanceof api.NonCanonicalParamsError) {
+      res.redirect(req.path + '?' + err.canonicalQs);
+      return;
+    }
+
+    next(err);
+  }
+}
+
+
+
 app.get('/', async (req, res, next) => {
 
   let tempTracker;
-
+  
   try {
-
+    
     let params = api.parseParams(req);
 
     // Validate the source URL is in the whitelist of allowed domains
@@ -53,23 +78,7 @@ app.get('/', async (req, res, next) => {
 
   } catch (ex) {
 
-    if (process.env.NODE_ENV == "production") {
-      res
-        .status(500)
-        .set({
-          'cache-control': 'no-cache'
-        })
-        .send(`<html><head><title>Error</title></head><body><pre>${ex.message}</pre></body></html>`);
-
-      console.log(ex);
-    } else {
-      if (ex instanceof api.NonCanonicalParamsError) {
-        res.redirect("/?" + ex.canonicalQs);
-        return;
-      }
-
-      next(ex);
-    }
+    next(ex);
 
   } finally {
 
@@ -81,8 +90,15 @@ app.get('/', async (req, res, next) => {
 });
 
 app.get('/frame', async (req, res, next) => {
-  await frame.write(req, res, next);
+  try {
+    let params = api.parseParams(req);
+    await frame.write(req, res, next);
+  } catch (ex) {
+    next (ex);
+  }
 });
+
+app.use(errorHandlingMiddleware);
 
 // Ensure there's a temp dir
 if (!fs.existsSync(TEMP_DIR)) {
@@ -94,3 +110,4 @@ domainWhitelist.printStatus(process.stdout);
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
 console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
