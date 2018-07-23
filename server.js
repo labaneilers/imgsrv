@@ -81,8 +81,7 @@ app.get('/', async (req, res, next) => {
 });
 
 app.get('/frame', async (req, res, next) => {
-  let hostname = req.protocol + '://' + req.headers.host;
-  await frame.write(hostname, req.originalUrl.replace("/frame?", "/?"), req, res, next);
+  await frame.write(req, res, next);
 });
 
 // Ensure there's a temp dir
