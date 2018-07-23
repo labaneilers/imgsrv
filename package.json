@@ -1,7 +1,7 @@
 {
   "name": "imgsrv",
   "version": "1.0.0",
-  "description": "",
+  "description": "A proxy server which optimizes images",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,7 +13,7 @@
     "docker:attach": "docker attach imgsrv",
     "docker": "npm run docker:stop && npm run docker:build && npm run docker:run"
   },
-  "author": "",
+  "author": "laban@eilers.com",
   "license": "ISC",
   "dependencies": {
     "await-stream-ready": "^1.0.1",
