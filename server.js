@@ -4,12 +4,14 @@
 const express = require('express');
 const fs = require('fs');
 
+
 // Modules
 const optimize = require("./optimize");
 const TempTracker = require("./temptracker").TempTracker;
 const api = require('./api');
 const proxy = require('./proxy');
 const DomainWhitelist = require("./domain-whitelist").DomainWhitelist;
+const frame = require('./frame');
 
 // Constants
 const PORT = 80;
@@ -79,7 +81,8 @@ app.get('/', async (req, res, next) => {
 });
 
 app.get('/frame', async (req, res, next) => {
-  res.send(`<html><head><title>Error</title></head><body><img src="${req.originalUrl.replace("/frame?", "/?")}" /></body></html>`);
+  let hostname = req.protocol + '://' + req.headers.host;
+  await frame.write(hostname, req.originalUrl.replace("/frame?", "/?"), req, res, next);
 });
 
 // Ensure there's a temp dir

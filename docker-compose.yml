@@ -9,5 +9,5 @@ services:
     ports:
       - "56789:80"
       - "5858:5858"
-    environment:
-      - IMGSRV_DOMAINS=www.vistaprint.com,upload.wikimedia.org
+    # environment:
+      # - IMGSRV_DOMAINS=www.vistaprint.com,upload.wikimedia.org
