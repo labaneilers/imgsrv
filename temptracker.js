@@ -25,18 +25,16 @@ class TempTracker {
     }
 
     async cleanup() {
-        return;
-
-        // var tasks = this.files.map(async f => {
-        //     try {
-        //         return await unlink(f);
-        //     } catch (ex) {
-        //         if (ex.code != "ENOENT") {
-        //             console.log(ex);
-        //         }
-        //     }
-        // });
-        // await Promise.all(tasks);
+        var tasks = this.files.map(async f => {
+            try {
+                return await unlink(f);
+            } catch (ex) {
+                if (ex.code != "ENOENT") {
+                    console.log(ex);
+                }
+            }
+        });
+        await Promise.all(tasks);
     }
 }
 
