@@ -26,8 +26,6 @@ const app = express();
 let domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
 
 var errorHandlingMiddleware = function (err, req, res, next) {
-  console.log("ERROR TRACKING!");
-
   if (process.env.NODE_ENV == "production") {
     console.log(err);
 
@@ -48,12 +46,10 @@ var errorHandlingMiddleware = function (err, req, res, next) {
   }
 }
 
-
-
 app.get('/', async (req, res, next) => {
 
   let tempTracker;
-  
+
   try {
     
     let params = api.parseParams(req);
