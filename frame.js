@@ -42,9 +42,27 @@ async function write(request, response, next) {
                 <div><label>URL:</label> <span>${optimizedUri}</span></div>
                 <div><label>Accept:</label> <span>${accept}</span></div>
                 <div><label>UserAgent:</label> <span>${ua}</span></div>
+                <div><label>Size:</label> <span id="size"></span></div>
                 <div>
                     <img src="${optimizedUri}" />
                 </div>
+
+                <script>
+                function getSize() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', '${optimizedUri}', true);
+                    xhr.onreadystatechange = function(){
+                        if ( xhr.readyState == 4 ) {
+                            if ( xhr.status == 200 ) {
+                                var size = parseInt(xhr.getResponseHeader('Content-Length'));
+                                document.getElementById("size").innerHTML = Math.round(size / 1024) + 'KB (' + size.toLocaleString() + ' bytes)';
+                            } 
+                        }
+                    };
+                    xhr.send(null);
+                }
+                getSize();
+                </script>
             </body>
             </html>`);
 }
