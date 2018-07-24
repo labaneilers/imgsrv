@@ -15,6 +15,7 @@
   },
   "author": "laban@eilers.com",
   "license": "ISC",
+  "repository": "https://github.com/labaneilers/imgsrv",
   "dependencies": {
     "await-stream-ready": "^1.0.1",
     "express": "^4.16.3",
