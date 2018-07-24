@@ -35,13 +35,16 @@ async function write(request, response, next) {
                 <style>
                 label { font-weight: bold; }
                 body { font-family: Arial; }
+                div { margin: 10px; }
                 </style>
             </head>
             <body>
                 <div><label>URL:</label> <span>${optimizedUri}</span></div>
                 <div><label>Accept:</label> <span>${accept}</span></div>
                 <div><label>UserAgent:</label> <span>${ua}</span></div>
-                <img src="${optimizedUri}" />
+                <div>
+                    <img src="${optimizedUri}" />
+                </div>
             </body>
             </html>`);
 }
