@@ -28,7 +28,22 @@ async function write(request, response, next) {
         .status(200)
         .set({
         'cache-control': 'no-cache'
-        }).send(`<html><head><title>Optimized Image</title></head><body><div>${optimizedUri}</div><img src="${optimizedUri}" /></body></html>`);
+        }).send(`
+            <html>
+            <head>
+                <title>Optimized Image</title>
+                <style>
+                label { font-weight: bold; }
+                body { font-family: Arial; }
+                </style>
+            </head>
+            <body>
+                <div><label>URL:</label> <span>${optimizedUri}</span></div>
+                <div><label>Accept:</label> <span>${accept}</span></div>
+                <div><label>UserAgent:</label> <span>${ua}</span></div>
+                <img src="${optimizedUri}" />
+            </body>
+            </html>`);
 }
 
 exports.write = write;
