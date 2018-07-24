@@ -24,7 +24,11 @@ async function write(request, response, next) {
 
     var optimizedUri = '/?' + qs.toString();
 
-    response.send(`<html><head><title>Optimized Image</title></head><body><div>${optimizedUri}</div><img src="${optimizedUri}" /></body></html>`);
+    response
+        .status(200)
+        .set({
+        'cache-control': 'no-cache'
+        }).send(`<html><head><title>Optimized Image</title></head><body><div>${optimizedUri}</div><img src="${optimizedUri}" /></body></html>`);
 }
 
 exports.write = write;
