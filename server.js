@@ -6,11 +6,11 @@ const fs = require('fs');
 
 
 // Modules
-const optimize = require("./optimize");
-const TempTracker = require("./temptracker").TempTracker;
+const optimize = require('./optimize');
+const TempTracker = require('./temptracker').TempTracker;
 const api = require('./api');
 const proxy = require('./proxy');
-const DomainWhitelist = require("./domain-whitelist").DomainWhitelist;
+const DomainWhitelist = require('./domain-whitelist').DomainWhitelist;
 const frame = require('./frame');
 
 // Constants
@@ -25,8 +25,8 @@ const app = express();
 // If none is supplied, all domains are allowed
 let domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
 
-var errorHandlingMiddleware = function (err, req, res, next) {
-  if (process.env.NODE_ENV == "production") {
+let errorHandlingMiddleware = function (err, req, res, next) {
+  if (process.env.NODE_ENV == 'production') {
     console.log(err);
 
     res
@@ -44,14 +44,15 @@ var errorHandlingMiddleware = function (err, req, res, next) {
 
     next(err);
   }
-}
+};
 
+// Main image optimization proxy route
 app.get('/', async (req, res, next) => {
 
   let tempTracker;
 
   try {
-    
+
     let params = api.parseParams(req);
 
     // Validate the source URL is in the whitelist of allowed domains
@@ -66,7 +67,7 @@ app.get('/', async (req, res, next) => {
 
     // Generate the best optimized version of the file
     let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, params.allowJxr, tempTracker);
-    
+
     console.log(`optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
 
     // Write the optimized file to the browser

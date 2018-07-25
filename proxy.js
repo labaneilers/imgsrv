@@ -8,7 +8,7 @@ const validateResponse = function(response) {
   console.log(`Origin status code: ${response.statusCode}`);
 
   if (response.statusCode != 200) {
-      throw new Error(`Requested image failed with status code: ${response.statusCode}`)
+      throw new Error(`Requested image failed with status code: ${response.statusCode}`);
   }
 
   let contentTypeHeader = response.headers['content-type'];
@@ -44,7 +44,7 @@ const getFile = function (uri, tempTracker, callback) {
   let r = request.get({
     uri: uri,
     headers: {
-      "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36' //'imgsrv proxy (https://github.com/labaneilers/imgsrv)'
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36' //'imgsrv proxy (https://github.com/labaneilers/imgsrv)'
     }
   });
 
@@ -53,19 +53,19 @@ const getFile = function (uri, tempTracker, callback) {
     })
     .on('response', response => {
       try {
-        let validation = validateResponse(response);  
+        let validation = validateResponse(response);
         tempFile = tempTracker.create(validation.ext);
         fileStream = fs.createWriteStream(tempFile, { encoding: 'binary' });
       } catch (ex) {
         callback(ex);
         return;
       }
-      
-      fileStream.on('finish', () => { 
+
+      fileStream.on('finish', () => {
         callback(null, tempFile);
       });
-  
-      fileStream.on('err', ex => { 
+
+      fileStream.on('err', ex => {
         callback(ex);
       });
 
@@ -74,18 +74,18 @@ const getFile = function (uri, tempTracker, callback) {
       } catch (ex) {
         callback(ex);
       }
-    }); 
+    });
 };
 
 const sendFile = async function(response, filePath, mimeType) {
-  let sendFile = util.promisify(response.sendFile.bind(response)); 
+  let sendFile = util.promisify(response.sendFile.bind(response));
 
   await sendFile(
-    filePath, 
-    { 
+    filePath,
+    {
       maxAge: 31449600, // Cache for 1 year
       headers: {
-        'content-type': mimeType      
+        'content-type': mimeType
       }
     }
   );

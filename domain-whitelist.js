@@ -33,7 +33,7 @@ class DomainWhitelist {
         if (this.domainWhitelist) {
             let sourceHost = url.parse(uri).host.toLowerCase();
             if (!this.domainWhitelist[sourceHost]) {
-                throw new Error(`Domain not whitelisted: ${sourceHost}`)
+                throw new Error(`Domain not whitelisted: ${sourceHost}`);
             }
         }
     }

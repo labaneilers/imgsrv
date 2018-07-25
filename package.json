@@ -11,7 +11,9 @@
     "docker:run": "docker run --name imgsrv -p 56789:80 imgsrv",
     "docker:stop": "docker stop imgsrv & docker rm imgsrv",
     "docker:attach": "docker attach imgsrv",
-    "docker": "npm run docker:stop && npm run docker:build && npm run docker:run"
+    "docker": "npm run docker:stop && npm run docker:build && npm run docker:run",
+    "lint": "eslint ./**/*.js",
+    "lint:fix": "eslint --fix ./**/*.js"
   },
   "author": "laban@eilers.com",
   "license": "ISC",
@@ -23,6 +25,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "eslint": "^5.2.0",
     "nodemon": "^1.17.5"
   }
 }

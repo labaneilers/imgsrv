@@ -1,0 +1,24 @@
+{
+    "parserOptions": {
+        "ecmaVersion": 2017,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "jsx": false
+        }
+    },
+    "rules": {
+        "semi":"error",
+        "no-irregular-whitespace":"error",
+        "consistent-return":"error",
+        "space-before-blocks": "error",
+        "curly": "error",
+        "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
+        "quotes": ["error", "single"],
+        "no-var": "error",
+        "prefer-arrow-callback": "error",
+        "no-tabs": "error",
+        "no-trailing-spaces": "error",
+        "newline-per-chained-call": "error"
+        
+    }
+}

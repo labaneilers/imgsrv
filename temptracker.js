@@ -25,11 +25,11 @@ class TempTracker {
     }
 
     async cleanup() {
-        var tasks = this.files.map(async f => {
+        let tasks = this.files.map(async f => {
             try {
-                return await unlink(f);
+                await unlink(f);
             } catch (ex) {
-                if (ex.code != "ENOENT") {
+                if (ex.code != 'ENOENT') {
                     console.log(ex);
                 }
             }

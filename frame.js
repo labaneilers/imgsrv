@@ -22,13 +22,14 @@ async function write(request, response, next) {
         }
     }
 
-    var optimizedUri = '/?' + qs.toString();
+    let optimizedUri = '/?' + qs.toString();
 
     response
         .status(200)
         .set({
-        'cache-control': 'no-cache'
-        }).send(`
+            'cache-control': 'no-cache'
+        })
+        .send(`
             <html>
             <head>
                 <title>Optimized Image</title>
