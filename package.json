@@ -12,8 +12,8 @@
     "docker:stop": "docker stop imgsrv & docker rm imgsrv",
     "docker:attach": "docker attach imgsrv",
     "docker": "npm run docker:stop && npm run docker:build && npm run docker:run",
-    "lint": "eslint ./**/*.js",
-    "lint:fix": "eslint --fix ./**/*.js"
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix ."
   },
   "author": "laban@eilers.com",
   "license": "ISC",

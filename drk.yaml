@@ -1,0 +1,5 @@
+dockerFile: Dockerfile.build
+dockerDir: /code
+commands:
+  default:
+    command: npm run
