@@ -8,7 +8,7 @@ exports.config = {
     /**
        * Array of application names.
        */
-    app_name: [ "imgsrv-" + process.env.ENV ],
+    app_name: [ 'imgsrv-' + process.env.ENV ],
     /**
        * Your New Relic license key.
        */
@@ -21,4 +21,4 @@ exports.config = {
            */
       level: 'info'
     }
-};  
+};
