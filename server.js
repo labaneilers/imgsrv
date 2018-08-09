@@ -3,7 +3,7 @@
 // Framework dependencies
 const express = require('express');
 const fs = require('fs');
-
+const newrelic = require('newrelic');
 
 // Modules
 const optimize = require('./optimize');
@@ -48,6 +48,8 @@ let errorHandlingMiddleware = function (err, req, res, next) {
 
 // Main image optimization proxy route
 app.get('/', async (req, res, next) => {
+
+  newrelic.setTransactionName('GET/');
 
   let tempTracker;
 

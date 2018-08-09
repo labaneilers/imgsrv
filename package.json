@@ -21,6 +21,7 @@
   "dependencies": {
     "await-stream-ready": "^1.0.1",
     "express": "^4.16.3",
+    "newrelic": "^4.7.0",
     "request": "^2.87.0",
     "uuid": "^3.3.2"
   },
