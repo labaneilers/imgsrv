@@ -8,7 +8,13 @@ const execAsync = util.promisify(require('child_process').exec);
 
 const getImageSize = async function(path) {
     let size = await execAsync(`identify -format '%wx%h' ${path}`);
-    let sizeArr = size.stdout.replace(/'/gi, '').split('x');
+    let sizeArr = [];
+    if(size.stdout){
+        sizeArr = size.stdout.replace(/'/gi, '').split('x');
+    }
+    else{
+        sizeArr = size.replace(/'/gi, '').split('x');
+    }
     return {
         width: parseInt(sizeArr[0]),
         height: parseInt(sizeArr[1])
