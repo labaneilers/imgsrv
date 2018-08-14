@@ -8,12 +8,10 @@ const execAsync = util.promisify(require('child_process').exec);
 
 const getImageSize = async function(path) {
     let size = await execAsync(`identify -format '%wx%h' ${path}`);
-    let sizeArr = [];
-    if(size.stdout) {
-        sizeArr = size.stdout.replace(/'/gi, '').split('x');
-    } else {
-        sizeArr = size.replace(/'/gi, '').split('x');
-    }
+    // NOTE: Normally child_process.exec is supposed to return stdout as a string,
+    // it is interacting with newrelic and util.promisify so that an object
+    // is being returned with stdout and stderr properties.
+    let sizeArr = (size.stdout || size).replace(/'/gi, '').split('x');
     return {
         width: parseInt(sizeArr[0]),
         height: parseInt(sizeArr[1])
