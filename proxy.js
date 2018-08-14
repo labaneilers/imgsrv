@@ -83,7 +83,7 @@ const sendFile = async function(response, filePath, mimeType) {
   await sendFile(
     filePath,
     {
-      maxAge: 31449600, // Cache for 1 year
+      maxAge: '1y',
       headers: {
         'content-type': mimeType
       }
