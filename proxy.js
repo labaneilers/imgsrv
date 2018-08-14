@@ -79,18 +79,13 @@ const getFile = function (uri, tempTracker, callback) {
 
 const sendFile = async function(response, filePath, mimeType) {
   let sendFile = util.promisify(response.sendFile.bind(response));
-  let currentDate = new Date();
-  let yearFromNow = new Date();
-  yearFromNow.setFullYear(currentDate.getFullYear() + 1);
 
   await sendFile(
     filePath,
     {
       maxAge: 31449600, // Cache for 1 year
       headers: {
-        'content-type': mimeType,
-        'Cache-Control': 'public, max-age=31449600',
-        'expires': yearFromNow.toGMTString()
+        'content-type': mimeType
       }
     }
   );
