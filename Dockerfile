@@ -5,7 +5,6 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends apt-utils
-RUN apt-get install -y curl
 RUN apt-get install -y jpegoptim
 RUN apt-get install -y imagemagick
 RUN apt-get install -y pngquant
