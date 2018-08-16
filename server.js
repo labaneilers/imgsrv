@@ -46,6 +46,24 @@ let errorHandlingMiddleware = function (err, req, res, next) {
   }
 };
 
+class Timer {
+  constructor(id) {
+    this.id = id;
+    this.timers = {};
+  }
+
+  start(message) {
+    this.timers[message] = new Date();
+  }
+
+  stop(message) {
+    let now = new Date();
+    let started = this.timers[message];
+    let ms = now - started;
+    console.log(`${this.id} ${message} ${ms}`);
+  }
+}
+
 // Main image optimization proxy route
 app.get('/', async (req, res, next) => {
 
@@ -66,16 +84,24 @@ app.get('/', async (req, res, next) => {
     // Keep track of temp files so we can clean them up after each request
     tempTracker = new TempTracker(TEMP_DIR);
 
+    let timer = new Timer(params.uri);
+
     // Get the source file and save to disk
+    timer.start('get');
     let tempFile = await proxy.getFile(params.uri, tempTracker);
+    timer.stop('get');
 
     // Generate the best optimized version of the file
+    timer.start('optimize');
     let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, params.allowJxr, tempTracker);
+    timer.stop('optimize');
 
     console.log(`optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
 
     // Write the optimized file to the browser
+    timer.start('send');
     await proxy.sendFile(res, optimizedFile.path, optimizedFile.mimeType);
+    timer.stop('send');
 
   } catch (ex) {
 
