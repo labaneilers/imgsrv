@@ -1,7 +1,7 @@
 version: "2"
 
 services:
-  web:
+  debug:
     build: .
     command: npm run debug
     volumes:
@@ -9,6 +9,14 @@ services:
     ports:
       - "56789:80"
       - "9222:9222"
+    environment:
+      # - IMGSRV_DOMAINS=www.vistaprint.com,upload.wikimedia.org
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+  web:
+    build: .
+    command: npm start
+    ports:
+      - "56789:80"
     environment:
       # - IMGSRV_DOMAINS=www.vistaprint.com,upload.wikimedia.org
       - NODE_TLS_REJECT_UNAUTHORIZED=0
