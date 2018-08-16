@@ -9,6 +9,7 @@
     "docker:debug": "docker-compose up",
     "docker:build": "docker build . -t imgsrv",
     "docker:run": "docker run --name imgsrv -p 56789:80 imgsrv",
+    "docker:interact": "docker run -it imgsrv /bin/bash",
     "docker:stop": "docker stop imgsrv & docker rm imgsrv",
     "docker:attach": "docker attach imgsrv",
     "docker": "npm run docker:stop && npm run docker:build && npm run docker:run",

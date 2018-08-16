@@ -45,7 +45,8 @@ const getFile = function (uri, tempTracker, callback) {
     uri: uri,
     headers: {
       'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36' //'imgsrv proxy (https://github.com/labaneilers/imgsrv)'
-    }
+    },
+    insecure: process.env.NODE_TLS_REJECT_UNAUTHORIZED == '0'
   });
 
   r.on('error', ex => {
