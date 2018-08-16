@@ -92,7 +92,7 @@ app.get('/', async (req, res, next) => {
     timer.stop('perf:get');
 
     // Generate the best optimized version of the file
-    timer.start('optimize');
+    timer.start('perf:optimize');
     let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, params.allowJxr, tempTracker);
     timer.stop('perf:optimize');
 
