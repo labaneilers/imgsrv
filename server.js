@@ -96,7 +96,7 @@ app.get('/', async (req, res, next) => {
     let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, params.allowJxr, tempTracker);
     timer.stop('perf:optimize');
 
-    console.log(`perf:optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
+    console.log(`optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
 
     // Write the optimized file to the browser
     timer.start('perf:send');
