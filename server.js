@@ -16,7 +16,7 @@ const frame = require('./frame');
 // Constants
 const PORT = 80;
 const HOST = '0.0.0.0';
-const TEMP_DIR = __dirname + '/tmp';
+const TEMP_DIR = process.env.IMGSRV_TEMP || (__dirname + '/tmp');
 
 // App
 const app = express();
@@ -137,4 +137,5 @@ domainWhitelist.printStatus(process.stdout);
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
 console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`Using temp dir ${TEMP_DIR}`);
 

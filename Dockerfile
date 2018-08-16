@@ -30,6 +30,8 @@ RUN npm install --production
 # Bundle app source
 COPY . .
 
+RUN mkdir /imgsrvtmp
+
 EXPOSE 80
 EXPOSE 9222
 CMD [ "npm", "start" ]
