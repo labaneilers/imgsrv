@@ -87,21 +87,21 @@ app.get('/', async (req, res, next) => {
     let timer = new Timer(params.uri);
 
     // Get the source file and save to disk
-    timer.start('get');
+    timer.start('perf:get');
     let tempFile = await proxy.getFile(params.uri, tempTracker);
-    timer.stop('get');
+    timer.stop('perf:get');
 
     // Generate the best optimized version of the file
     timer.start('optimize');
     let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, params.allowJxr, tempTracker);
-    timer.stop('optimize');
+    timer.stop('perf:optimize');
 
-    console.log(`optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
+    console.log(`perf:optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
 
     // Write the optimized file to the browser
-    timer.start('send');
+    timer.start('perf:send');
     await proxy.sendFile(res, optimizedFile.path, optimizedFile.mimeType);
-    timer.stop('send');
+    timer.stop('perf:send');
 
   } catch (ex) {
 
