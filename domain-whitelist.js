@@ -16,7 +16,7 @@ class DomainWhitelist {
                     let segments = item.split('/');
                     let lastSegment = result[segments[0].toLowerCase()] = {};
                     for (let i = 1; i<segments.length; i++) {
-                        lastSegment.hasChildren = true;
+                        lastSegment.__hasPaths = true;
                         lastSegment = lastSegment[segments[i].toLowerCase()] = {};
                     }
                     return result;
@@ -42,14 +42,14 @@ class DomainWhitelist {
             let wlItem = this.domainWhitelist[sourceHost];
             if (!wlItem) {
                 throw new Error(`Domain not whitelisted: ${sourceHost}`);
-            } else if (wlItem.hasChildren) {
+            } else if (wlItem.__hasPaths) {
 
                 let dirs = parsed.path.toLowerCase()
                     .substr(1)
                     .split('/');
                 let i = 0;
 
-                while (wlItem.hasChildren && i < dirs.length) {
+                while (wlItem.__hasPaths && i < dirs.length) {
                     let nextItem = wlItem[dirs[i]];
                     if (!nextItem) {
                         throw new Error(`Domain whitelisted, but missing segment: ${dirs[i]}`);
