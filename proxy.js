@@ -5,15 +5,15 @@ const util = require('util');
 const fs = require('fs');
 const log = require('./logger');
 
+const MAX_SIZE = process.env.IMGSRV_MAX_SIZE || 3145728; // 3MB
+
 const validateResponse = function(response) {
-  log.write('originStatus', response.statusCode);
 
   if (response.statusCode != 200) {
       throw new Error(`Requested image failed with status code: ${response.statusCode}`);
   }
 
   let contentTypeHeader = response.headers['content-type'];
-  log.write('originContentType', contentTypeHeader);
 
   if (!contentTypeHeader) {
     throw new Error('Requested image failed: no content type specified');
@@ -26,6 +26,17 @@ const validateResponse = function(response) {
   if (contentTypeCategory != 'image') {
     throw new Error(`Requested image failed: content type ${contentTypeCategory}`);
   }
+
+  let contentLength = parseInt(response.headers['content-length']);
+  if (contentLength > MAX_SIZE) {
+    throw new Error(`Request image larger than max size: ${MAX_SIZE} (was ${contentLength})`);
+  }
+
+  log.write('origin', {
+    statusCode: response.statusCode,
+    contentType: contentTypeHeader,
+    contentLength: contentLength
+  });
 
   return {
     ext: ext
@@ -71,8 +82,17 @@ const getFile = function (uri, tempTracker, callback) {
         callback(ex);
       });
 
+      let size = 0;
+
       try {
-        r.pipe(fileStream);
+        r.on('data', (data) => {
+            size += data.length;
+
+            if (size > MAX_SIZE) {
+                res.abort(); // Abort the response (close and cleanup the stream)
+                throw new Error(`Request image larger than max size: ${MAX_SIZE} (was ${contentLength})`);
+            }
+        }).pipe(fileStream);
       } catch (ex) {
         callback(ex);
       }
@@ -95,3 +115,4 @@ const sendFile = async function(response, filePath, mimeType) {
 
 exports.getFile = util.promisify(getFile);
 exports.sendFile = sendFile;
+exports.maxSize = MAX_SIZE;

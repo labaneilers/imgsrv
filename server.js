@@ -81,6 +81,8 @@ app.get('/', async (req, res, next) => {
     newrelic.setTransactionName('GET/');
   }
 
+  log.write('url', req.url);
+
   let tempTracker;
 
   try {
@@ -155,5 +157,6 @@ log.writeNoRequest({
   env: process.env.NODE_ENV || 'development',
   tmp: TEMP_DIR,
   verbose: log.verbose,
+  maxSize: proxy.maxSize,
   whitelist: domainWhitelist.getStatus()
 });
