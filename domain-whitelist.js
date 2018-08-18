@@ -13,7 +13,12 @@ class DomainWhitelist {
             this.domainWhitelist = process.env.IMGSRV_DOMAINS
                 .split(',')
                 .reduce((result, item) => {
-                    result[item.toLowerCase()] = true;
+                    let segments = item.split('/');
+                    let lastSegment = result[segments[0].toLowerCase()] = {};
+                    for (let i = 1; i<segments.length; i++) {
+                        lastSegment.hasChildren = true;
+                        lastSegment = lastSegment[segments[i].toLowerCase()] = {};
+                    }
                     return result;
                     }, {});
         }
@@ -31,9 +36,27 @@ class DomainWhitelist {
     // Checks the specified URI against the whitelist, throws an error if the domain (hostname) is not whitelisted
     validate(uri) {
         if (this.domainWhitelist) {
-            let sourceHost = url.parse(uri).host.toLowerCase();
-            if (!this.domainWhitelist[sourceHost]) {
+            let parsed = url.parse(uri);
+            let sourceHost = parsed.host.toLowerCase();
+
+            let wlItem = this.domainWhitelist[sourceHost];
+            if (!wlItem) {
                 throw new Error(`Domain not whitelisted: ${sourceHost}`);
+            } else if (wlItem.hasChildren) {
+
+                let dirs = parsed.path.toLowerCase()
+                    .substr(1)
+                    .split('/');
+                let i = 0;
+
+                while (wlItem.hasChildren && i < dirs.length) {
+                    let nextItem = wlItem[dirs[i]];
+                    if (!nextItem) {
+                        throw new Error(`Domain whitelisted, but missing segment: ${dirs[i]}`);
+                    }
+                    wlItem = nextItem;
+                    i++;
+                }    
             }
         }
     }
