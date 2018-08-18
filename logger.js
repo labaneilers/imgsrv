@@ -1,6 +1,18 @@
 'use strict';
 
+// Utility for JSON logging
+// Helps to bundle all logs for the same request together
+// in a single JSON object
+
 const httpContext = require('express-http-context');
+
+// Allow setting indention for JSON logs for readability when running locally
+let INDENT = null;
+if (process.env.IMGSRV_LOG_INDENT) {
+    INDENT = '  ';
+}
+
+const VERBOSE = process.env.IMGSRV_VERBOSE == '1';
 
 const getLog = function() {
     let log = httpContext.get('log');
@@ -11,15 +23,8 @@ const getLog = function() {
     return log;
 };
 
-let indent = null;
-if (process.env.IMGSRV_LOG_INDENT) {
-    indent = '  ';
-}
-
-const VERBOSE = process.env.IMGSRV_VERBOSE == '1';
-
 const print = function(obj) {
-    let data = JSON.stringify(obj, null, indent);
+    let data = JSON.stringify(obj, null, INDENT);
     if (obj.errors) {
         console.error(data);
     } else if (VERBOSE) {
@@ -28,6 +33,14 @@ const print = function(obj) {
 };
 
 module.exports = {
+
+    init: function(requestId, url) {
+        let log = getLog();
+        log.id = requestId;
+        log.url = url;
+        log.timestamp = (new Date()).toUTCString();
+    },
+
     write: function(key, value) {
         let log = getLog();
         if (typeof(key) == 'object') {
@@ -64,6 +77,11 @@ module.exports = {
 
     writeNoRequest: function(value) {
         print(value);
+    },
+
+    requestId: function() {
+        let log = getLog();
+        return log.id;
     },
 
     verbose: VERBOSE

@@ -7,6 +7,7 @@ const httpContext = require('express-http-context');
 const newrelic = process.env.NEWRELIC_LICENSE_KEY ? require('newrelic') : null;
 
 // Modules
+const errorHandling = require('./error-handling');
 const optimize = require('./optimize');
 const TempTracker = require('./temptracker').TempTracker;
 const api = require('./api');
@@ -14,6 +15,7 @@ const proxy = require('./proxy');
 const DomainWhitelist = require('./domain-whitelist').DomainWhitelist;
 const frame = require('./frame');
 const log = require('./logger');
+const Timer = require('./timer').Timer;
 
 // Constants
 const PORT = 80;
@@ -22,57 +24,13 @@ const TEMP_DIR = process.env.IMGSRV_TEMP || (__dirname + '/tmp');
 
 // App
 const app = express();
+
+// Middleware to keep request-scoped state for JSON logging
 app.use(httpContext.middleware);
 
-// Create a whitelist of allowed domains for source images
+// Create a whitelist of allowed domains/paths for source images
 // If none is supplied, all domains are allowed
-let domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
-
-let errorHandlingMiddleware = function (err, req, res, next) {
-  log.error(err);
-  log.flush();
-
-  if (process.env.NODE_ENV == 'production') {
-    res
-      .status(500)
-      .set({
-        'cache-control': 'no-cache'
-      })
-      .send(`<html><head><title>Error</title></head><body><pre>${err.message}</pre></body></html>`);
-
-  } else {
-    if (err instanceof api.NonCanonicalParamsError) {
-      res.redirect(req.path + '?' + err.canonicalQs);
-      return;
-    }
-
-    res
-      .status(500)
-      .set({
-        'cache-control': 'no-cache'
-      })
-      .send(`<html><head><title>Error</title></head><body><pre>${err.stack}</pre></body></html>`);
-  }
-};
-
-class Timer {
-  constructor(id) {
-    this.id = id;
-    this.timers = {};
-    this.messages = {};
-  }
-
-  start(message) {
-    this.timers[message] = new Date();
-  }
-
-  stop(message) {
-    let now = new Date();
-    let started = this.timers[message];
-    let ms = now - started;
-    this.messages[message] = ms;
-  }
-}
+const domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
 
 // Main image optimization proxy route
 app.get('/', async (req, res, next) => {
@@ -81,9 +39,11 @@ app.get('/', async (req, res, next) => {
     newrelic.setTransactionName('GET/');
   }
 
-  log.write('url', req.url);
+  // Keep track of temp files so we can clean them up after each request
+  let tempTracker = new TempTracker(TEMP_DIR);
 
-  let tempTracker;
+  // Initialize the log with a request ID and URL
+  log.init(tempTracker.id, req.url);
 
   try {
 
@@ -92,9 +52,6 @@ app.get('/', async (req, res, next) => {
     // Validate the source URL is in the whitelist of allowed domains
     // Reduces surface area for DOS attack
     domainWhitelist.validate(params.uri);
-
-    // Keep track of temp files so we can clean them up after each request
-    tempTracker = new TempTracker(TEMP_DIR);
 
     let timer = new Timer(params.uri);
 
@@ -135,6 +92,8 @@ app.get('/', async (req, res, next) => {
   }
 });
 
+// Renders a page which contains an image with the same params
+// Useful for testing browser-sniffing and URL generation
 app.get('/frame', async (req, res, next) => {
   try {
     let params = api.parseParams(req);
@@ -144,14 +103,15 @@ app.get('/frame', async (req, res, next) => {
   }
 });
 
-app.use(errorHandlingMiddleware);
+// Error handling goes last
+app.use(errorHandling.middleware);
+app.listen(PORT, HOST);
 
 // Ensure there's a temp dir
 if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR);
 }
 
-app.listen(PORT, HOST);
 log.writeNoRequest({
   startup: `http://${HOST}:${PORT}`,
   env: process.env.NODE_ENV || 'development',

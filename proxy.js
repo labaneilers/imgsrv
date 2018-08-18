@@ -107,7 +107,8 @@ const sendFile = async function(response, filePath, mimeType) {
     {
       maxAge: '1y',
       headers: {
-        'content-type': mimeType
+        'content-type': mimeType,
+        'X-RequestID': log.requestId()
       }
     }
   );

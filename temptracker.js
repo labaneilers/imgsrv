@@ -10,6 +10,7 @@ class TempTracker {
     constructor(tempDir) {
         this.files = [];
         this.tempDir = tempDir;
+        this.id = uuid();
     }
 
     add(file) {
@@ -17,7 +18,7 @@ class TempTracker {
     }
 
     create(ext) {
-        let tempFile = `${this.tempDir}/${uuid()}.${ext}`;
+        let tempFile = `${this.tempDir}/${this.id}.${ext}`;
         tempFile = path.normalize(tempFile);
 
         this.add(tempFile);
@@ -30,7 +31,7 @@ class TempTracker {
                 await unlink(f);
             } catch (ex) {
                 if (ex.code != 'ENOENT') {
-                    console.log(ex);
+                    console.error(ex);
                 }
             }
         });
