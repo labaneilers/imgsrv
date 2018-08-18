@@ -26,3 +26,5 @@ services:
       # - IMGSRV_DOMAINS=www.vistaprint.com,upload.wikimedia.org
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - IMGSRV_TEMP=/imgsrvtmp
+      - IMGSRV_LOG_INDENT=1
+      - IMGSRV_VERBOSE=1
