@@ -12,6 +12,8 @@ services:
     environment:
       # - IMGSRV_DOMAINS=www.vistaprint.com,upload.wikimedia.org
       - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - IMGSRV_LOG_INDENT=1
+      - IMGSRV_VERBOSE=1
   web:
     build: .
     command: npm start

@@ -5,6 +5,7 @@ const fs = require('fs');
 const util = require('util');
 const stat = util.promisify(fs.stat);
 const execAsync = util.promisify(require('child_process').exec);
+const log = require('./logger');
 
 const getImageSize = async function(path) {
     let size = await execAsync(`identify -format '%wx%h' ${path}`);
@@ -50,10 +51,10 @@ const createHighQualitySrc = async function(file, width, tempTracker) {
 
     // TODO: Check if src is already the right size and skip
     // TODO: Should we skip creating a png here if the source is JPG?
-    console.log('resize png: ' + hqPng);
+    log.write('resizePng', hqPng);
     let pngTask = execAsync(`convert "${file.path}" -resize ${width} "${hqPng}"`);
 
-    console.log('resize jpg: ' + hqJpg);
+    log.write('resizeJpg', hqJpg);
     let jpgTask = execAsync(`convert "${file.path}" -quality 100 -resize ${width} "${hqJpg}"`);
 
     await Promise.all([ pngTask, jpgTask ]);
@@ -73,7 +74,7 @@ const optCommand = async function(srcPath, srcExt, targetExt, createCommand, han
     let target = srcPath.replace('.hiq.' + srcExt, '.opt.' + targetExt);
     tempTracker.add(target);
 
-    console.log(`generating ${targetExt}: ` + target);
+    //log.write(`generating ${targetExt}: ` + target);
     try {
         await execAsync(createCommand(srcPath, target));
         let fileSize = await getFileSize(target);
@@ -97,7 +98,7 @@ const optPng = async function(srcPath, tempTracker) {
         'png',
         'png',
         (src, target) => `pngquant --force --quality=65-80 "${src}" --output "${target}"`,
-        ex => console.log('pngquant failed: probably a photo'),
+        ex => log.warning('pngquant failed: probably a photo'),
         tempTracker
     );
 };
@@ -159,7 +160,7 @@ const optimize = async function(filePath, width, allowWebp, allowJp2, allowJxr, 
 
     let file = await getFileProps(filePath);
 
-    console.log('input format: ' + file.ext);
+    log.write('inputFormat', file.ext);
 
     let hqSrc = await createHighQualitySrc(file, width, tempTracker);
     let empty = Promise.resolve(EMPTY_RESULT);
@@ -178,9 +179,7 @@ const optimize = async function(filePath, width, allowWebp, allowJp2, allowJxr, 
         .filter(o => o.type);
     allOutput.sort((a, b) => a.fileSize - b.fileSize);
 
-    allOutput.forEach(o => {
-        console.log(`${o.type}: ${o.fileSize}`);
-    });
+    log.write('candidates', allOutput);
 
     return allOutput[0];
 };

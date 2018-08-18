@@ -3,6 +3,7 @@
 // Framework dependencies
 const express = require('express');
 const fs = require('fs');
+const httpContext = require('express-http-context');
 const newrelic = process.env.NEWRELIC_LICENSE_KEY ? require('newrelic') : null;
 
 // Modules
@@ -12,6 +13,7 @@ const api = require('./api');
 const proxy = require('./proxy');
 const DomainWhitelist = require('./domain-whitelist').DomainWhitelist;
 const frame = require('./frame');
+const log = require('./logger');
 
 // Constants
 const PORT = 80;
@@ -20,15 +22,17 @@ const TEMP_DIR = process.env.IMGSRV_TEMP || (__dirname + '/tmp');
 
 // App
 const app = express();
+app.use(httpContext.middleware);
 
 // Create a whitelist of allowed domains for source images
 // If none is supplied, all domains are allowed
 let domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
 
 let errorHandlingMiddleware = function (err, req, res, next) {
-  if (process.env.NODE_ENV == 'production') {
-    console.log(err);
+  log.error(err);
+  log.flush();
 
+  if (process.env.NODE_ENV == 'production') {
     res
       .status(500)
       .set({
@@ -42,7 +46,12 @@ let errorHandlingMiddleware = function (err, req, res, next) {
       return;
     }
 
-    next(err);
+    res
+      .status(500)
+      .set({
+        'cache-control': 'no-cache'
+      })
+      .send(`<html><head><title>Error</title></head><body><pre>${err.stack}</pre></body></html>`);
   }
 };
 
@@ -50,6 +59,7 @@ class Timer {
   constructor(id) {
     this.id = id;
     this.timers = {};
+    this.messages = {};
   }
 
   start(message) {
@@ -60,7 +70,7 @@ class Timer {
     let now = new Date();
     let started = this.timers[message];
     let ms = now - started;
-    console.log(`${this.id} ${message} ${ms}`);
+    this.messages[message] = ms;
   }
 }
 
@@ -87,21 +97,28 @@ app.get('/', async (req, res, next) => {
     let timer = new Timer(params.uri);
 
     // Get the source file and save to disk
-    timer.start('perf:get');
+    timer.start('get');
     let tempFile = await proxy.getFile(params.uri, tempTracker);
-    timer.stop('perf:get');
+    timer.stop('get');
 
     // Generate the best optimized version of the file
-    timer.start('perf:optimize');
+    timer.start('optimize');
     let optimizedFile = await optimize.optimize(tempFile, params.width, params.allowWebp, params.allowJp2, params.allowJxr, tempTracker);
-    timer.stop('perf:optimize');
+    timer.stop('optimize');
 
-    console.log(`optimized file: ${optimizedFile.path} (${optimizedFile.fileSize} bytes)`);
+    log.write({
+      resultFile: optimizedFile.path,
+      resultSize: optimizedFile.fileSize
+    });
 
     // Write the optimized file to the browser
-    timer.start('perf:send');
+    timer.start('send');
     await proxy.sendFile(res, optimizedFile.path, optimizedFile.mimeType);
-    timer.stop('perf:send');
+    timer.stop('send');
+
+    log.write('perf', timer.messages);
+
+    log.flush();
 
   } catch (ex) {
 
@@ -121,7 +138,7 @@ app.get('/frame', async (req, res, next) => {
     let params = api.parseParams(req);
     await frame.write(req, res, next);
   } catch (ex) {
-    next (ex);
+    next(ex);
   }
 });
 
@@ -132,10 +149,11 @@ if (!fs.existsSync(TEMP_DIR)) {
   fs.mkdirSync(TEMP_DIR);
 }
 
-domainWhitelist.printStatus(process.stdout);
-
 app.listen(PORT, HOST);
-console.log(`Running on http://${HOST}:${PORT}`);
-console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-console.log(`Using temp dir ${TEMP_DIR}`);
-
+log.writeNoRequest({
+  startup: `http://${HOST}:${PORT}`,
+  env: process.env.NODE_ENV || 'development',
+  tmp: TEMP_DIR,
+  verbose: log.verbose,
+  whitelist: domainWhitelist.getStatus()
+});

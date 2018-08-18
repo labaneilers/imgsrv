@@ -1,6 +1,7 @@
 'use strict';
 
 const url = require('url');
+const log = require('./logger');
 
 // A whitelist of allowed domains for source images
 class DomainWhitelist {
@@ -19,12 +20,11 @@ class DomainWhitelist {
     }
 
     // Emits status to console
-    printStatus(stream) {
+    getStatus() {
         if (this.domainWhitelist) {
-            stream.write('Whitelisting domains:\n');
-            Object.keys(this.domainWhitelist).forEach(d => stream.write(`  -  ${d}\n`));
+            return this.domainWhitelist;
         } else {
-            stream.write('WARNING: No domain whitelist specified: allowing ALL domains\n');
+            return { warning: 'No domain whitelist specified: allowing ALL domains' };
         }
     }
 

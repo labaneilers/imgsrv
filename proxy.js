@@ -3,16 +3,17 @@
 const request = require('request');
 const util = require('util');
 const fs = require('fs');
+const log = require('./logger');
 
 const validateResponse = function(response) {
-  console.log(`Origin status code: ${response.statusCode}`);
+  log.write('originStatus', response.statusCode);
 
   if (response.statusCode != 200) {
       throw new Error(`Requested image failed with status code: ${response.statusCode}`);
   }
 
   let contentTypeHeader = response.headers['content-type'];
-  console.log(contentTypeHeader);
+  log.write('originContentType', contentTypeHeader);
 
   if (!contentTypeHeader) {
     throw new Error('Requested image failed: no content type specified');
