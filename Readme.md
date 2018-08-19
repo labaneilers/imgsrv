@@ -39,6 +39,16 @@ Rewrite the URL as such:
 http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500
 ```
 
+### Parameter order and encoding
+
+In order to ensure maximal cacheablity, ImgSrv enforces the order and encoding of querystring parameters. It will respond with a 500 error for requests that don't have the correct order or encoding. 
+
+The order of parameters is:
+
+1. ```u```: The origin URL. Must be URL encoded (e.g. via ```encodeURIComponent()```)
+2. ```w```: Width.
+3. ```webp```, ```jxr```, or ```jp2``` (based on browser support)
+
 ## Using browser-specific formats
 
 To take full advantage of ImgSrv, you would configure your URL generation code to add an additional querystring parameter for specific formats, based on accept header/browser support.
@@ -122,16 +132,6 @@ docker build . -t imgsrv
 ImgSrv is designed to produce the smallest possible image, and NOT designed to run quickly enough to support real-time requests. It has NO internal caching features. As such, **it is essential that you deploy ImgSrv behind a caching proxy or CDN** (e.g. Squid, AWS CloudFront, Akamai, or CloudFlare). ImgSrv can take multiple seconds to render images, so caching results is critical.
 
 ImgSrv emits cache-control headers to cache images for 1 year, so it is also recommended you treat image URLs as immutable.
-
-### Parameter order and encoding
-
-In order to ensure maximal cacheablity, ImgSrv enforces the order and encoding of querystring parameters. It will respond with a 500 error for requests that don't have the correct order or encoding. 
-
-The order of parameters is:
-
-1. ```u```: The origin URL. Must be URL encoded (e.g. via ```encodeURIComponent()```)
-2. ```w```: Width.
-3. ```webp```, ```jxr```, or ```jp2``` (based on browser support)
 
 ## Configuration
 
