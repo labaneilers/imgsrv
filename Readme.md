@@ -24,7 +24,7 @@ Since the size savings for these formats is significant, it is worth it for page
 The format for an ImgSrv URL is as follows:
 
 ```
-http://localhost:56789/?w={width}&webp={1 if webp}&jp2={1 if jpeg 2000}&u={source image uri}
+http://{imgsrv hostname}/?u={source image uri}&w={width}&webp={1 if webp}&jp2={1 if jpeg 2000}
 ```
 
 For example, for the original image:
