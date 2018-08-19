@@ -1,5 +1,5 @@
 # ImgSrv
-ImgSrv is a proxy server which optimizes and resizes images, and supports several browser-specific formats. This can be used to reduce the size of all images on your site by 40-50%.  
+ImgSrv is a proxy server which optimizes and resizes images, and supports several browser-specific formats. This can be used to reduce the size of images across your site by 40-50%.  
 
 ## How it works
 
@@ -21,7 +21,7 @@ Since the size savings for these formats is significant, it is worth it for page
 
 ## Usage
 
-Wherever you emit a URL image URLs to use this format:
+The format for an ImgSrv URL is as follows:
 
 ```
 http://localhost:56789/?w={width}&webp={1 if webp}&jp2={1 if jpeg 2000}&u={source image uri}
