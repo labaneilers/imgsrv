@@ -11,7 +11,7 @@ For any source image, several different compression types are compared in a bake
 * Jpeg2000: Uses https://www.imagemagick.org/script/index.php
 * JpegXR: Uses https://github.com/4creators/jxrlib
 
-Note the two of these formats are not supported in all browsers:
+Note that two of these formats are not supported in all browsers:
 
 * WebP: Works in Chrome and other Chromium-based browsers, including on Android
 * Jpeg2000: Works in Safari, including in iOS
@@ -41,7 +41,7 @@ http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fi
 
 ## Using browser-specific formats
 
-To take full advantage of ImgSrv, you would configure your URL generation code to add an additional querystring parameter for specific formats, based on accept header/browser support (see "Detection" below).
+To take full advantage of ImgSrv, you would configure your URL generation code to add an additional querystring parameter for specific formats, based on accept header/browser support.
 
 There are two ways to serve images with the correct parameters for the supported image formats:
 
@@ -66,7 +66,7 @@ More information:
 
 ### 2. Server side feature detection
 
-Given the complexity and size of the picture element, it may be desirable to generate URLs server side and render IMG tags with the ```srcset``` attribute. https://blog.elijaa.org/2016/01/29/detect-webp-jpeg2000-jpegxr-image-format-support-in-php/
+Given the complexity and size of the picture element, it may be desirable to generate URLs server side and render IMG tags with the ```srcset``` attribute. 
 
 Here's example server-side URL generation code for a node.js application:
 
@@ -107,7 +107,7 @@ Use these URLs to emit IMG tags in this form:
 <img srcset="http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500&webp=1 1x, http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=1000&webp=1 2x">
 ```
 
-Note that you could also use a function (like the one above) to generate these URLs client-side (i.e. via React components).
+Note that you could also use a function (like the one above) to generate these URLs client-side (e.g. via React components).
 
 ## Deployment
 
@@ -119,7 +119,7 @@ docker build . -t imgsrv
 ```
 
 ### Caching
-ImgSrv is designed to produce the smallest possible image, and NOT designed to run quickly enough to support real-time requests. It has NO internal caching features. As such, **it is essential that you deploy ImgSrv behind a caching proxy or CDN** (i.e. Squid, AWS CloudFront, Akamai, or CloudFlare). ImgSrv can take multiple seconds to render images, so caching results is critical.
+ImgSrv is designed to produce the smallest possible image, and NOT designed to run quickly enough to support real-time requests. It has NO internal caching features. As such, **it is essential that you deploy ImgSrv behind a caching proxy or CDN** (e.g. Squid, AWS CloudFront, Akamai, or CloudFlare). ImgSrv can take multiple seconds to render images, so caching results is critical.
 
 ### Parameter order and encoding
 
@@ -127,7 +127,7 @@ In order to ensure maximal cacheablity, ImgSrv enforces the order and encoding o
 
 The order of parameters is:
 
-1. ```u```: The origin URL. Must be URL encoded (i.e. via ```encodeURIComponent()```)
+1. ```u```: The origin URL. Must be URL encoded (e.g. via ```encodeURIComponent()```)
 2. ```w```: Width.
 3. ```webp```, ```jxr```, or ```jp2``` (based on browser support)
 
@@ -140,7 +140,7 @@ ImgSrv uses ImageMagick internally to convert and compress images, and writes te
 IMGSRV_TEMP=/mnt/temp
 ```
 
-Note: When running ImgSrv in production (i.e. in Kubernetes), it is recommended you put the temp directory on a fast mounted volume, such as a ramdisk.
+Note: When running ImgSrv in production (e.g. in Kubernetes), it is recommended you put the temp directory on a fast mounted volume, such as a ramdisk.
 
 ### Origin whitelist
 Setting an origin whitelist prevents use of ImgSrv to proxy images from origins that aren't yours. Use the environment variable ```IMGSRV_ORIGIN_WHITELIST``` to specify an origin whitelist:
@@ -171,13 +171,13 @@ Each request has a requestID, which appears in the logs in the field ```id```, a
 
 ## Development
 
-Installing the dependencies for ImgSrv are a bit tricky, so it is recommended to do local development with the docker container. Use docker compose to launch the debug configuration of ImgSrv (i.e. which uses nodemon for auto-reloading):
+Installing the dependencies for ImgSrv are a bit tricky, so it is recommended to do local development with the docker container. Use docker compose to launch the debug configuration of ImgSrv (e.g. which uses nodemon for auto-reloading):
 
 ```
 docker-compose up debug
 ```
 
-You can then attach a debugger (i.e. using the included Visual Studio Code launchSettings.json).
+You can then attach a debugger (e.g. using the included Visual Studio Code launchSettings.json).
 
 ## Example source images
 
