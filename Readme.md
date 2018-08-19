@@ -152,7 +152,7 @@ IMGSRV_ORIGIN_WHITELIST=www.vistaprint.com,s3-eu-west-1.amazonaws.com/sitecore-m
 ```
 
 ### Logging
-ImgSrv writes JSON logs to stdout. By default, only requests with errors are logged, but you can configure it to write more detailed information about requests:
+ImgSrv writes JSON logs to stdout. By default, only requests with errors are logged, but you can configure it to write more detailed information about requests with the following environment variables:
 
 ```
 IMGSRV_VERBOSE=1
