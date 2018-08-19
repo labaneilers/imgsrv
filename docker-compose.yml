@@ -10,7 +10,7 @@ services:
       - "56789:80"
       - "9222:9222"
     environment:
-      - IMGSRV_DOMAINS=www.vistaprint.com,s3-eu-west-1.amazonaws.com/sitecore-media-bucket
+      - IMGSRV_ORIGIN_WHITELIST=www.vistaprint.com,s3-eu-west-1.amazonaws.com/sitecore-media-bucket
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - IMGSRV_LOG_INDENT=1
       - IMGSRV_VERBOSE=1
@@ -23,7 +23,7 @@ services:
     ports:
       - "56789:80"
     environment:
-      # - IMGSRV_DOMAINS=www.vistaprint.com,upload.wikimedia.org
+      # - IMGSRV_ORIGIN_WHITELIST=www.vistaprint.com,upload.wikimedia.org
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - IMGSRV_TEMP=/imgsrvtmp
       - IMGSRV_LOG_INDENT=1

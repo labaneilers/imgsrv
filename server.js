@@ -12,7 +12,7 @@ const optimize = require('./optimize');
 const TempTracker = require('./temptracker').TempTracker;
 const api = require('./api');
 const proxy = require('./proxy');
-const DomainWhitelist = require('./domain-whitelist').DomainWhitelist;
+const OriginWhitelist = require('./origin-whitelist').OriginWhitelist;
 const frame = require('./frame');
 const log = require('./logger');
 const Timer = require('./timer').Timer;
@@ -30,7 +30,7 @@ app.use(httpContext.middleware);
 
 // Create a whitelist of allowed domains/paths for source images
 // If none is supplied, all domains are allowed
-const domainWhitelist = new DomainWhitelist(process.env.IMGSRV_DOMAINS);
+const originWhitelist = new OriginWhitelist(process.env.IMGSRV_ORIGIN_WHITELIST);
 
 // Main image optimization proxy route
 app.get('/', async (req, res, next) => {
@@ -51,7 +51,7 @@ app.get('/', async (req, res, next) => {
 
     // Validate the source URL is in the whitelist of allowed domains
     // Reduces surface area for DOS attack
-    domainWhitelist.validate(params.uri);
+    originWhitelist.validate(params.uri);
 
     let timer = new Timer(params.uri);
 
@@ -118,5 +118,5 @@ log.writeNoRequest({
   tmp: TEMP_DIR,
   verbose: log.verbose,
   maxSize: proxy.maxSize,
-  whitelist: domainWhitelist.getStatus()
+  whitelist: originWhitelist.getStatus()
 });

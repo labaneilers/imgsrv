@@ -7,10 +7,10 @@ const log = require('./logger');
 class OriginWhitelist {
 
     constructor(domainEnv) {
-        this.domainWhitelist = null;
+        this.originWhitelist = null;
 
         if (domainEnv) {
-            this.domainWhitelist = process.env.IMGSRV_ORIGIN_WHITELIST
+            this.originWhitelist = process.env.IMGSRV_ORIGIN_WHITELIST
                 .split(',')
                 .reduce((result, item) => {
                     let segments = item.split('/');
@@ -26,22 +26,22 @@ class OriginWhitelist {
 
     // Emits status to console
     getStatus() {
-        if (this.domainWhitelist) {
-            return this.domainWhitelist;
+        if (this.originWhitelist) {
+            return this.originWhitelist;
         } else {
-            return { warning: 'No domain whitelist specified: allowing ALL domains' };
+            return { warning: 'No origin whitelist specified: allowing ALL origins' };
         }
     }
 
-    // Checks the specified URI against the whitelist, throws an error if the domain (hostname) is not whitelisted
+    // Checks the specified URI against the whitelist, throws an error if the origin is not whitelisted
     validate(uri) {
-        if (this.domainWhitelist) {
+        if (this.originWhitelist) {
             let parsed = url.parse(uri);
             let sourceHost = parsed.host.toLowerCase();
 
-            let wlItem = this.domainWhitelist[sourceHost];
+            let wlItem = this.originWhitelist[sourceHost];
             if (!wlItem) {
-                throw new Error(`Domain not whitelisted: ${sourceHost}`);
+                throw new Error(`Origin not whitelisted: ${sourceHost}`);
             } else if (wlItem.__hasPaths) {
 
                 let dirs = parsed.path.toLowerCase()
@@ -52,7 +52,7 @@ class OriginWhitelist {
                 while (wlItem.__hasPaths && i < dirs.length) {
                     let nextItem = wlItem[dirs[i]];
                     if (!nextItem) {
-                        throw new Error(`Domain whitelisted, but missing segment: ${dirs[i]}`);
+                        throw new Error(`Origin whitelisted, but missing segment: ${dirs[i]}`);
                     }
                     wlItem = nextItem;
                     i++;

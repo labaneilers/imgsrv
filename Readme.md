@@ -1,5 +1,5 @@
 # ImgSrv
-A proxy server which optimizes and resizes images. 
+ImgSrv is a proxy server which optimizes and resizes images, and supports several browser-specific formats. This can be used to reduce the size of all images on your site by 40-50%.  
 
 ## How it works
 
@@ -21,16 +21,163 @@ Since the size savings for these formats is significant, it is worth it for page
 
 ## Usage
 
+Wherever you emit a URL image URLs to use this format:
+
 ```
 http://localhost:56789/?w={width}&webp={1 if webp}&jp2={1 if jpeg 2000}&u={source image uri}
 ```
 
-## Detection
+For example, for the original image:
+
+```
+https://www.somedomain.com/images/foo.png
+```
+
+Rewrite the URL as such:
+
+```
+http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500
+```
+
+## Using browser-specific formats
+
+To take full advantage of ImgSrv, you would configure your URL generation code to add an additional querystring parameter for specific formats, based on accept header/browser support (see "Detection" below).
 
 There are two ways to serve images with the correct parameters for the supported image formats:
 
-1. The PICTURE HTML element: http://www.useragentman.com/blog/2015/01/14/using-webp-jpeg2000-jpegxr-apng-now-with-picturefill-and-modernizr/
-2. Server side feature detection: Detect on the server side and construct URLs when you render IMG tags. https://blog.elijaa.org/2016/01/29/detect-webp-jpeg2000-jpegxr-image-format-support-in-php/
+1. The PICTURE HTML element
+2. Server side feature detection
+
+### 1. The PICTURE HTML element
+
+More information: 
+
+* http://www.useragentman.com/blog/2015/01/14/using-webp-jpeg2000-jpegxr-apng-now-with-picturefill-and-modernizr/
+* http://scottjehl.github.io/picturefill/
+
+```html
+<picture>
+  <source srcset="http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500&webp=1 1x, http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=1000&webp=1 2x" type="image/webp">
+  <source srcset="http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500&jxr=1 1x, http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=1000&jxr=1 2x" type="image/vnd.ms-photo">
+  <source srcset="http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500&jp2=1 1x, http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=1000&jp2=1 2x" type="image/jp2">
+  <img src="http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500">
+</picture>
+```
+
+### 2. Server side feature detection
+
+Given the complexity and size of the picture element, it may be desirable to generate URLs server side and render IMG tags with the ```srcset``` attribute. https://blog.elijaa.org/2016/01/29/detect-webp-jpeg2000-jpegxr-image-format-support-in-php/
+
+Here's example server-side URL generation code for a node.js application:
+
+```javascript
+function getUrl(originalUrl, width) {
+    let qs = new URLSearchParams();
+
+    qs.set(u, originalUrl);
+    qs.set(w, width);
+
+    // Detect webp and jpegXR support via accept headers
+    let accept = (request.headers['accept'] || '').split(',');
+
+    // Detect jpeg2000 support via user-agent
+    let ua = request.headers['user-agent'] || '';
+
+    if (accept.indexOf('image/webp') >= 0) {
+        qs.set('webp', '1');
+    } else if (accept.indexOf('image/jxr') >= 0) {
+        qs.set('jxr', '1');
+    } else if (ua.indexOf('Safari') >= 0) {
+
+        // Safari version 6+ supports jpeg2000
+        let match = ua.match(/Version\/(\d+)/);
+        let version = parseInt(match[1]) || 0;
+        if (version >= 6) {
+            qs.set('jp2', '1');
+        }
+    }
+
+    return IMGSRV_HOST + '/?' + qs.toString();
+}
+```
+
+Use these URLs to emit IMG tags in this form:
+
+```html
+<img srcset="http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=500&webp=1 1x, http://my-imgsrv-instance.somedomain.com/?u=https%3A%2F%2Fwww.somedomain.com%2Fimages%2Ffoo.png&w=1000&webp=1 2x">
+```
+
+Note that you could also use a function (like the one above) to generate these URLs client-side (i.e. via React components).
+
+## Deployment
+
+### Docker container
+ImgSrv was designed to be deployed as a docker container. To build it, use:
+
+```
+docker build . -t imgsrv
+```
+
+### Caching
+ImgSrv is designed to produce the smallest possible image, and NOT designed to run quickly enough to support real-time requests. It has NO internal caching features. As such, **it is essential that you deploy ImgSrv behind a caching proxy or CDN** (i.e. Squid, AWS CloudFront, Akamai, or CloudFlare). ImgSrv can take multiple seconds to render images, so caching results is critical.
+
+### Parameter order and encoding
+
+In order to ensure maximal cacheablity, ImgSrv enforces the order and encoding of querystring parameters. It will respond with a 500 error for requests that don't have the correct order or encoding. 
+
+The order of parameters is:
+
+1. ```u```: The origin URL. Must be URL encoded (i.e. via ```encodeURIComponent()```)
+2. ```w```: Width.
+3. ```webp```, ```jxr```, or ```jp2``` (based on browser support)
+
+## Configuration
+
+### Temp directory
+ImgSrv uses ImageMagick internally to convert and compress images, and writes temporary image files to the file system. By default, this is written to the directory ```/server/tmp``` (the node.js app root is ```/server```). You can override this with the environment variable ```IMGSRV_TEMP```:
+
+```
+IMGSRV_TEMP=/mnt/temp
+```
+
+Note: When running ImgSrv in production (i.e. in Kubernetes), it is recommended you put the temp directory on a fast mounted volume, such as a ramdisk.
+
+### Origin whitelist
+Setting an origin whitelist prevents use of ImgSrv to proxy images from origins that aren't yours. Use the environment variable ```IMGSRV_ORIGIN_WHITELIST``` to specify an origin whitelist:
+
+```
+IMGSRV_ORIGIN_WHITELIST=www.vistaprint.com,s3-eu-west-1.amazonaws.com/sitecore-media-bucket
+```
+
+### Logging
+ImgSrv writes JSON logs to stdout. By default, only requests with errors are logged, but you can configure it to write more detailed information about requests:
+
+```
+IMGSRV_VERBOSE=1
+```
+
+By default, JSON logs are single line, but for ease of debugging, you can configure them to be indented:
+
+```
+IMGSRV_LOG_INDENT=1
+```
+
+### Application Performance Monitoring
+
+ImgSrv can be monitored via NewRelic. To enable, set the environment variable ```NEWRELIC_LICENSE_KEY``` to your NewRelic license.
+
+### Request IDs
+Each request has a requestID, which appears in the logs in the field ```id```, and also in an HTTP header ```X-RequestID```. For requests that error, the requestID is emitted in the response body.
+
+## Development
+
+Installing the dependencies for ImgSrv are a bit tricky, so it is recommended to do local development with the docker container. Use docker compose to launch the debug configuration of ImgSrv (i.e. which uses nodemon for auto-reloading):
+
+```
+docker-compose up debug
+```
+
+You can then attach a debugger (i.e. using the included Visual Studio Code launchSettings.json).
 
 ## Example source images
 
@@ -43,11 +190,5 @@ There are two ways to serve images with the correct parameters for the supported
 ### JXR examples:
 http://localhost:56789/?u=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fb%2Fbb%2FPickle.jpg&w=1200&jxr=1
 http://localhost:56789/?u=https://www.vistaprint.com/merch/www/mc/legacy/images/vp-site/vhp/marquee/BasicMarqueeA/GL-outdoor-signage-001-2x-hccd3814da8fbc9167eef977d96ab455e7.png&w=1200&jxr=1
-
-## TODO
-* Pass in a list of whitelisted domains as an ENV variable
-* Logging strategy
-* Check if the raw image source is already the right size and skip resizing
-* Short circuit creating a PNG when the source image is a JPG- it will be unlikely to work.
 
 
