@@ -56,7 +56,7 @@ class DomainWhitelist {
                     }
                     wlItem = nextItem;
                     i++;
-                }    
+                }
             }
         }
     }
