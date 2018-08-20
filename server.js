@@ -111,7 +111,10 @@ let asyncTimeout = util.promisify(setTimeout);
 // Renders a page which contains an image with the same params
 // Useful for testing browser-sniffing and URL generation
 app.get('/timeoutdirect', async (req, res, next) => {
-  await asyncTimeout(parseInt(req.query.t) || 10000);
+  let timeout = parseInt(req.query.t) || 10000;
+  if (timeout > 0) {
+    await asyncTimeout(parseInt(req.query.t) || 10000);
+  }
   res
     .status(500)
     .set({
@@ -122,7 +125,10 @@ app.get('/timeoutdirect', async (req, res, next) => {
 });
 
 app.get('/timeout', async (req, res, next) => {
-  await asyncTimeout(parseInt(req.query.t) || 10000);
+  let timeout = parseInt(req.query.t) || 10000;
+  if (timeout > 0) {
+    await asyncTimeout(parseInt(req.query.t) || 10000);
+  }
   try {
     throw new Error('Testing timeout');
   } catch (ex) {
@@ -131,9 +137,12 @@ app.get('/timeout', async (req, res, next) => {
 });
 
 app.get('/success', async (req, res, next) => {
-  await asyncTimeout(parseInt(req.query.t) || 10000);
+  let timeout = parseInt(req.query.t) || 10000;
+  if (timeout > 0) {
+    await asyncTimeout(parseInt(req.query.t) || 10000);
+  }
   res
-  .status(200)
+    .status(200)
     .set({
         'cache-control': 'no-cache',
         'content-type': 'text/html'
