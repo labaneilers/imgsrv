@@ -118,5 +118,6 @@ log.writeNoRequest({
   tmp: TEMP_DIR,
   verbose: log.verbose,
   maxSize: proxy.maxSize,
+  originTimeout: proxy.originTimeout,
   whitelist: originWhitelist.getStatus()
 });

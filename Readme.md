@@ -171,6 +171,14 @@ ImgSrv can be monitored via NewRelic. To enable, set the environment variable ``
 ### Request IDs
 Each request has a requestID, which appears in the logs in the field ```id```, and also in an HTTP header ```X-RequestID```. For requests that error, the requestID is emitted in the response body.
 
+### Origin timeout
+
+The timeout for an origin image is set to 10 seconds by default. You can override it with: 
+
+```
+IMGSRV_ORIGIN_TIMEOUT=5000
+```
+
 ## Development
 
 Installing the dependencies for ImgSrv are a bit tricky, so it is recommended to do local development with the docker container. Use docker compose to launch the debug configuration of ImgSrv (e.g. which uses nodemon for auto-reloading):

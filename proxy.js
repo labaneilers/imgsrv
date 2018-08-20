@@ -6,6 +6,7 @@ const fs = require('fs');
 const log = require('./logger');
 
 const MAX_SIZE = process.env.IMGSRV_MAX_SIZE || 3145728; // 3MB
+const ORIGIN_TIMEOUT = process.env.IMGSRV_ORIGIN_TIMEOUT || 10000;
 
 const validateResponse = function(response) {
 
@@ -59,7 +60,7 @@ const getFile = function (uri, tempTracker, callback) {
       'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36' //'imgsrv proxy (https://github.com/labaneilers/imgsrv)'
     },
     insecure: process.env.NODE_TLS_REJECT_UNAUTHORIZED == '0',
-    timeout: process.env.IMGSRV_ORIGIN_TIMEOUT || 10000
+    timeout: ORIGIN_TIMEOUT || 10000
   });
 
   r.on('error', ex => {
@@ -118,3 +119,4 @@ const sendFile = async function(response, filePath, mimeType) {
 exports.getFile = util.promisify(getFile);
 exports.sendFile = sendFile;
 exports.maxSize = MAX_SIZE;
+exports.originTimeout = ORIGIN_TIMEOUT;

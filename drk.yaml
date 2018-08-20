@@ -1,5 +1,7 @@
-dockerFile: Dockerfile.build
-dockerDir: /code
+dockerFile: Dockerfile
+dockerDir: /server
 commands:
   default:
     command: npm run
+  install:
+    command: npm install
