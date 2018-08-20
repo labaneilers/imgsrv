@@ -18,11 +18,11 @@ const errorHandlingMiddleware = function (err, req, res, next) {
     log.flush();
 
     if (process.env.NODE_ENV == 'production') {
-        respondWithError(res, err.message);
+        respondWithError(res, log.requestId(), err.message);
     } else {
         if (err instanceof api.NonCanonicalParamsError) {
-        res.redirect(req.path + '?' + err.canonicalQs);
-        return;
+            res.redirect(req.path + '?' + err.canonicalQs);
+            return;
         }
 
         respondWithError(res, log.requestId(), err.stack);
