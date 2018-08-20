@@ -1,6 +1,5 @@
 class Timer {
-    constructor(id) {
-        this.id = id;
+    constructor() {
         this.timers = {};
         this.messages = {};
     }
@@ -12,8 +11,15 @@ class Timer {
     stop(message) {
         let now = new Date();
         let started = this.timers[message];
+        delete this.timers[message];
         let ms = now - started;
         this.messages[message] = ms;
+    }
+
+    cleanup() {
+        Object.keys(this.timers).forEach(key => {
+            this.stop(key);
+        });
     }
 }
 

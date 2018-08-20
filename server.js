@@ -45,6 +45,9 @@ app.get('/', async (req, res, next) => {
   // Initialize the log with a request ID and URL
   log.init(tempTracker.id, req.url);
 
+  // Instrument performance
+  let timer = new Timer();
+
   try {
 
     let params = api.parseParams(req);
@@ -53,7 +56,7 @@ app.get('/', async (req, res, next) => {
     // Reduces surface area for DOS attack
     originWhitelist.validate(params.uri);
 
-    let timer = new Timer(params.uri);
+    log.write('perf', timer.messages);
 
     // Get the source file and save to disk
     timer.start('get');
@@ -75,12 +78,11 @@ app.get('/', async (req, res, next) => {
     await proxy.sendFile(res, optimizedFile.path, optimizedFile.mimeType);
     timer.stop('send');
 
-    log.write('perf', timer.messages);
-
     log.flush();
 
   } catch (ex) {
 
+    timer.cleanup();
     next(ex);
 
   } finally {
