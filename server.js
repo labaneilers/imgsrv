@@ -110,8 +110,8 @@ let asyncTimeout = util.promisify(setTimeout);
 
 // Renders a page which contains an image with the same params
 // Useful for testing browser-sniffing and URL generation
-app.get('/test500', async (req, res, next) => {
-  await asyncTimeout(10000);
+app.get('/timeoutdirect', async (req, res, next) => {
+  await asyncTimeout(parseInt(req.query.t) || 10000);
   res
     .status(500)
     .set({
@@ -120,8 +120,8 @@ app.get('/test500', async (req, res, next) => {
     .send('<html><head><title>Error</title></head><body><pre>Timeout testing</pre></body></html>');
 });
 
-app.get('/test2500', async (req, res, next) => {
-  await asyncTimeout(10000);
+app.get('/timeout', async (req, res, next) => {
+  await asyncTimeout(parseInt(req.query.t) || 10000);
   try {
     throw new Error('Testing timeout');
   } catch (ex) {
