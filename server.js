@@ -113,6 +113,7 @@ if (!fs.existsSync(TEMP_DIR)) {
 }
 
 log.writeNoRequest({
+  source: log.sourceName,
   startup: `http://${HOST}:${PORT}`,
   env: process.env.NODE_ENV || 'development',
   tmp: TEMP_DIR,

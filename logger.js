@@ -14,6 +14,8 @@ if (process.env.IMGSRV_LOG_INDENT) {
 
 const VERBOSE = process.env.IMGSRV_VERBOSE == '1';
 
+const SOURCENAME = process.env.IMGSRV_SOURCENAME || 'imgsrv';
+
 const getLog = function() {
     let log = httpContext.get('log');
     if (!log) {
@@ -36,6 +38,7 @@ module.exports = {
 
     init: function(requestId, url) {
         let log = getLog();
+        log.source = SOURCENAME || 'imgsrv';
         log.requestID = requestId;
         log.url = url;
         log.timestamp = (new Date()).toUTCString();
@@ -84,5 +87,6 @@ module.exports = {
         return log.requestID;
     },
 
-    verbose: VERBOSE
+    verbose: VERBOSE,
+    sourceName: SOURCENAME
 };

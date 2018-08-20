@@ -10,11 +10,12 @@ services:
       - "56789:80"
       - "9222:9222"
     environment:
-      - IMGSRV_ORIGIN_WHITELIST=www.vistaprint.com,s3-eu-west-1.amazonaws.com/sitecore-media-bucket
+      # - IMGSRV_ORIGIN_WHITELIST=www.vistaprint.com,s3-eu-west-1.amazonaws.com/sitecore-media-bucket
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - IMGSRV_LOG_INDENT=1
       - IMGSRV_VERBOSE=1
       #- IMGSRV_MAX_SIZE=2457408
+      - NODE_ENV=production
   web:
     build: .
     command: npm start
