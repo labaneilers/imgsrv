@@ -105,6 +105,30 @@ app.get('/frame', async (req, res, next) => {
   }
 });
 
+const util = require('util');
+let asyncTimeout = util.promisify(setTimeout);
+
+// Renders a page which contains an image with the same params
+// Useful for testing browser-sniffing and URL generation
+app.get('/test500', async (req, res, next) => {
+  await asyncTimeout(10000);
+  res
+    .status(500)
+    .set({
+        'cache-control': 'no-cache'
+    })
+    .send('<html><head><title>Error</title></head><body><pre>Timeout testing</pre></body></html>');
+});
+
+app.get('/test2500', async (req, res, next) => {
+  await asyncTimeout(10000);
+  try {
+    throw new Error('Testing timeout');
+  } catch (ex) {
+    next(ex);
+  }
+});
+
 // Error handling goes last
 app.use(errorHandling.middleware);
 app.listen(PORT, HOST);

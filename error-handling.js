@@ -7,8 +7,8 @@ const respondWithError = function(res, requestId, message) {
     res
         .status(500)
         .set({
-        'cache-control': 'no-cache',
-        'X-RequestID': requestId
+            'cache-control': 'no-cache',
+            'X-RequestID': requestId
         })
         .send(`<html><head><title>Error</title></head><body><pre>${message}</pre><pre>RequestID: ${requestId}</pre></body></html>`);
 };
