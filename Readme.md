@@ -169,7 +169,7 @@ IMGSRV_LOG_INDENT=1
 ImgSrv can be monitored via NewRelic. To enable, set the environment variable ```NEWRELIC_LICENSE_KEY``` to your NewRelic license.
 
 ### Request IDs
-Each request has a requestID, which appears in the logs in the field ```id```, and also in an HTTP header ```X-RequestID```. For requests that error, the requestID is emitted in the response body.
+Each request has a requestID, which appears in the logs in the field ```requestID```, and also in an HTTP header ```X-RequestID```. For requests that error, the requestID is emitted in the response body.
 
 ### Origin timeout
 

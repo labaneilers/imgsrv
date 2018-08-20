@@ -36,7 +36,7 @@ module.exports = {
 
     init: function(requestId, url) {
         let log = getLog();
-        log.id = requestId;
+        log.requestID = requestId;
         log.url = url;
         log.timestamp = (new Date()).toUTCString();
     },
@@ -81,7 +81,7 @@ module.exports = {
 
     requestId: function() {
         let log = getLog();
-        return log.id;
+        return log.requestID;
     },
 
     verbose: VERBOSE
