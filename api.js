@@ -1,5 +1,10 @@
 'use strict';
 
+const querystring = require('querystring');
+const url = require('url');
+
+const MAX_WIDTH = process.env.IMGSRV_MAX_WIDTH || 2400;
+
 class NonCanonicalParamsError extends Error {
   constructor(canonicalQs, actualQs) {
     let message = `Params order and encoding is strict to enforce cachability\nCanonical: ${canonicalQs}\nActual:${actualQs}`;
@@ -11,9 +16,6 @@ class NonCanonicalParamsError extends Error {
     Error.captureStackTrace(this, NonCanonicalParamsError);
   }
 }
-
-const querystring = require('querystring');
-const url = require('url');
 
 function getCanonicalQueryString(options) {
   let canonicalQs = {
@@ -57,7 +59,7 @@ function parseParams(request) {
       throw new Error('u (uri) parameter required');
     }
 
-    if (options.width > 2400) {
+    if (options.width > MAX_WIDTH) {
       throw new Error('w parameter too large');
     }
 
@@ -73,3 +75,4 @@ function parseParams(request) {
 
 exports.parseParams = parseParams;
 exports.NonCanonicalParamsError = NonCanonicalParamsError;
+exports.maxWidth = MAX_WIDTH;

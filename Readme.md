@@ -179,6 +179,22 @@ The timeout for an origin image is set to 10 seconds by default. You can overrid
 IMGSRV_ORIGIN_TIMEOUT=5000
 ```
 
+### Maximum input file size
+
+The default maximum allowed origin file size is 2457408. You can override it:
+
+```
+IMGSRV_MAX_SIZE=2457408
+```
+
+### Maximum output width
+
+The default maximum allowed output width (the ```w``` parameter) is 2400. You can override it:
+
+```
+IMGSRV_MAX_WIDTH=3000
+```
+
 ## Development
 
 Installing the dependencies for ImgSrv are a bit tricky, so it is recommended to do local development with the docker container. Use docker compose to launch the debug configuration of ImgSrv (e.g. which uses nodemon for auto-reloading):
