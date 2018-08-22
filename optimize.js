@@ -42,20 +42,25 @@ const getFileProps = async function (file) {
     return fileData;
 };
 
-const createHighQualitySrc = async function(file, width, tempTracker) {
+const createHighQualitySrc = async function(file, width, tempTracker, allowWebp) {
     let hqPng = file.path + '.hiq.png';
-    let hqJpg = file.path + '.hiq.jpg';
+    let hqJpg = allowWebp ? null : file.path + '.hiq.jpg';
 
     tempTracker.add(hqPng);
-    tempTracker.add(hqJpg);
 
     // TODO: Check if src is already the right size and skip
     // TODO: Should we skip creating a png here if the source is JPG?
     log.write('resizePng', hqPng);
     let pngTask = execAsync(`convert "${file.path}" -resize ${width} "${hqPng}"`);
 
-    log.write('resizeJpg', hqJpg);
-    let jpgTask = execAsync(`convert "${file.path}" -quality 100 -resize ${width} "${hqJpg}"`);
+    let jpgTask;
+    if (!allowWebp) {
+        tempTracker.add(hqJpg);
+        log.write('resizeJpg', hqJpg);
+        jpgTask = execAsync(`convert "${file.path}" -quality 100 -resize ${width} "${hqJpg}"`);
+    } else {
+        jpgTask = Promise.resolve(EMPTY_RESULT);
+    }
 
     await Promise.all([ pngTask, jpgTask ]);
 
@@ -162,11 +167,12 @@ const optimize = async function(filePath, width, allowWebp, allowJp2, allowJxr, 
 
     log.write('inputFormat', file.ext);
 
-    let hqSrc = await createHighQualitySrc(file, width, tempTracker);
+    let hqSrc = await createHighQualitySrc(file, width, tempTracker, allowWebp);
     let empty = Promise.resolve(EMPTY_RESULT);
+    let allowJpg = !(allowWebp || allowJp2 || allowJxr);
 
-    let pngTask = file.ext == '.png' ? optPng(hqSrc.png, tempTracker) : empty;
-    let jpgTask = optJpg(hqSrc.jpg, tempTracker);
+    let pngTask = (file.ext == '.png' && !allowWebp) ? optPng(hqSrc.png, tempTracker) : empty;
+    let jpgTask = allowJpg ? optJpg(hqSrc.jpg, tempTracker) : empty;
     let webpTask = allowWebp ? optWebp(hqSrc.png || hqSrc.jpg, tempTracker) : empty;
     let jp2Task = allowJp2 ? optJp2(hqSrc.jpg, tempTracker) : empty;
     let jxrTask = allowJxr ? optJxr(hqSrc.png, tempTracker) : empty;
