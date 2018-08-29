@@ -4,7 +4,7 @@
 const express = require('express');
 const fs = require('fs');
 const httpContext = require('express-http-context');
-const newrelic = process.env.NEWRELIC_LICENSE_KEY ? require('newrelic') : null;
+const newrelic = process.env.NEW_RELIC_LICENSE_KEY ? require('newrelic') : null;
 
 // Modules
 const errorHandling = require('./error-handling');

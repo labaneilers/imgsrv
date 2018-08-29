@@ -16,7 +16,7 @@ services:
       - IMGSRV_VERBOSE=1
       #- IMGSRV_MAX_SIZE=2457408
       - NODE_ENV=development
-      - NEWRELIC_LICENSE_KEY
+      - NEW_RELIC_LICENSE_KEY
       - IMGSRV_MAX_WIDTH=2460
   web:
     build: .
@@ -31,4 +31,4 @@ services:
       - IMGSRV_TEMP=/imgsrvtmp
       - IMGSRV_LOG_INDENT=1
       - IMGSRV_VERBOSE=1
-      - NEWRELIC_LICENSE_KEY
+      - NEW_RELIC_LICENSE_KEY
